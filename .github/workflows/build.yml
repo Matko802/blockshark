@@ -1,0 +1,77 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  GODOT_VERSION: 4.5-stable
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Godot editor
+        run: |
+          curl -sL "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v4.5-stable_linux.x86_64.zip" -o /tmp/godot.zip
+          unzip -o -j /tmp/godot.zip -d /tmp
+          chmod +x /tmp/Godot_v4.5-stable_linux.x86_64
+          /tmp/Godot_v4.5-stable_linux.x86_64 --version
+      - name: Import project
+        run: /tmp/Godot_v4.5-stable_linux.x86_64 --headless --path . --import
+      - name: Run logic test
+        run: |
+          /tmp/Godot_v4.5-stable_linux.x86_64 --headless --path . --script res://tests/logic_test.gd 2>&1 | tee test.log
+          grep -q "PASS logic" test.log
+
+  apk:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Setup Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools" 2>&1 | tail -n 3
+          yes | sdkmanager --licenses 2>&1 | tail -n 2
+      - name: Download Godot editor and export templates
+        run: |
+          curl -sL "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v4.5-stable_linux.x86_64.zip" -o /tmp/godot.zip
+          unzip -o -j /tmp/godot.zip -d /tmp
+          chmod +x /tmp/Godot_v4.5-stable_linux.x86_64
+          curl -sL "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v4.5-stable_export_templates.tpz" -o /tmp/templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/4.5.stable
+          unzip -o -j /tmp/templates.tpz "templates/android_debug.apk" "templates/android_release.apk" "templates/version.txt" -d ~/.local/share/godot/export_templates/4.5.stable/
+          rm /tmp/templates.tpz
+      - name: Configure Godot editor settings and debug keystore
+        run: |
+          mkdir -p ~/.config/godot
+          keytool -genkeypair -keystore ~/.config/godot/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10950 -storepass android -keypass android -dname "CN=Android Debug, OU=Blockshark, O=Blockshark, C=US"
+          printf '[gd_resource type="EditorSettings" load_steps=2 format=3]\n\n[resource]\nexport/android/debug_keystore = "%s/.config/godot/debug.keystore"\nexport/android/debug_keystore_user = "androiddebugkey"\nexport/android/debug_keystore_pass = "android"\nexport/android/java_sdk_path = "%s"\nexport/android/android_sdk_path = "%s"\n' "$HOME" "$JAVA_HOME" "$ANDROID_HOME" > ~/.config/godot/editor_settings-4.5.tres
+          cat ~/.config/godot/editor_settings-4.5.tres
+      - name: Export debug APK
+        run: |
+          mkdir -p dist
+          /tmp/Godot_v4.5-stable_linux.x86_64 --headless --path . --export-debug "Android" dist/blockshark3d-debug.apk
+          ls -lh dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blockshark3d-apk
+          path: dist/blockshark3d-debug.apk
+      - name: Release on tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/blockshark3d-debug.apk
+          generate_release_notes: true
