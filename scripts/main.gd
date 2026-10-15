@@ -10,7 +10,7 @@ var tray_nodes: Array = []
 var tray_x: Dictionary = {}
 var tray_tweens: Dictionary = {}
 var time := 0.0
-var app_version := "2.4.1"
+var app_version := "2.4.2"
 var app_code := 0
 
 @onready var board: BoardView = $Board
@@ -20,6 +20,43 @@ var app_code := 0
 @onready var updater = $Updater
 @onready var camera: Camera3D = $Camera3D
 @onready var tray_root: Node3D = $Tray
+@onready var sun: DirectionalLight3D = $Sun
+@onready var world_env: WorldEnvironment = $WorldEnvironment
+
+func sky_keys() -> Array:
+	return [
+		[0.0, Color(0.008, 0.012, 0.045), Color(0.10, 0.14, 0.30), Color(0.70, 0.80, 1.00), 0.85, 0.6],
+		[5.0, Color(0.008, 0.012, 0.045), Color(0.10, 0.14, 0.30), Color(0.70, 0.80, 1.00), 0.85, 0.6],
+		[7.0, Color(0.20, 0.25, 0.55), Color(0.98, 0.55, 0.30), Color(1.00, 0.75, 0.55), 1.0, 0.8],
+		[9.0, Color(0.25, 0.50, 0.95), Color(0.70, 0.85, 1.00), Color(1.00, 1.00, 1.00), 1.15, 0.9],
+		[16.0, Color(0.25, 0.50, 0.95), Color(0.70, 0.85, 1.00), Color(1.00, 1.00, 1.00), 1.15, 0.9],
+		[18.5, Color(0.15, 0.12, 0.35), Color(0.95, 0.45, 0.25), Color(1.00, 0.70, 0.50), 1.0, 0.8],
+		[20.0, Color(0.008, 0.012, 0.045), Color(0.10, 0.14, 0.30), Color(0.70, 0.80, 1.00), 0.85, 0.6],
+		[24.0, Color(0.008, 0.012, 0.045), Color(0.10, 0.14, 0.30), Color(0.70, 0.80, 1.00), 0.85, 0.6],
+	]
+
+func update_sky() -> void:
+	var dt := Time.get_datetime_dict_from_system()
+	var h := float(dt["hour"]) + float(dt["minute"]) / 60.0
+	var keys := sky_keys()
+	var a: Array = keys[0]
+	var b: Array = keys[keys.size() - 1]
+	for i in keys.size() - 1:
+		var k0: Array = keys[i]
+		var k1: Array = keys[i + 1]
+		if h >= float(k0[0]) and h <= float(k1[0]):
+			a = k0
+			b = k1
+			break
+	var span := maxf(float(b[0]) - float(a[0]), 0.001)
+	var t := clampf((h - float(a[0])) / span, 0.0, 1.0)
+	var mat := world_env.environment.sky.sky_material as ProceduralSkyMaterial
+	if mat != null:
+		mat.sky_top_color = (a[1] as Color).lerp(b[1] as Color, t)
+		mat.sky_horizon_color = (a[2] as Color).lerp(b[2] as Color, t)
+	sun.light_color = (a[3] as Color).lerp(b[3] as Color, t)
+	sun.light_energy = lerpf(float(a[4]), float(b[4]), t)
+	world_env.environment.ambient_light_energy = lerpf(float(a[5]), float(b[5]), t)
 
 func load_version() -> void:
 	var cfg := ConfigFile.new()
@@ -49,6 +86,12 @@ func _ready() -> void:
 	camera.look_at(Vector3(0, 0, 1.5))
 	fit_camera()
 	get_viewport().size_changed.connect(fit_camera)
+	update_sky()
+	var sky_timer := Timer.new()
+	sky_timer.wait_time = 60.0
+	sky_timer.autostart = true
+	add_child(sky_timer)
+	sky_timer.timeout.connect(update_sky)
 	drag.setup(camera, board, state, self)
 	hud.setup(self, version_text())
 	updater.setup(self, hud, app_version)

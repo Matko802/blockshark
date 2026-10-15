@@ -1,7 +1,7 @@
 extends RefCounted
 class_name PieceFactory
 
-const CUBE = 0.92
+const CUBE = 1.0
 
 static func build(shape: Dictionary, color: int, unique: bool, pickable: bool) -> Node3D:
 	var root := Node3D.new()

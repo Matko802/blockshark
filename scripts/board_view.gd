@@ -2,8 +2,8 @@ extends Node3D
 class_name BoardView
 
 const SIZE = 8
-const CUBE = 0.92
-const REST_Y = 0.57
+const CUBE = 1.0
+const REST_Y = 0.61
 
 var placed: Dictionary = {}
 var ghost_nodes: Array = []
