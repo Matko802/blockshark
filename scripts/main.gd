@@ -8,7 +8,7 @@ const TRAY_Y = 0.15
 var state: GameState
 var tray_nodes: Array = []
 var time := 0.0
-var app_version := "2.3.1"
+var app_version := "2.3.2"
 var app_code := 0
 
 @onready var board: BoardView = $Board
@@ -118,15 +118,6 @@ func on_pickup(idx: int) -> void:
 	node.scale = Vector3.ONE
 	sound.select()
 
-func anchor_for(idx: int, pt: Vector3) -> Vector2i:
-	var piece: Dictionary = state.tray[idx]
-	var shape: Dictionary = piece["shape"]
-	var w: int = shape["w"]
-	var h: int = shape["h"]
-	var col := roundi(pt.x + 4.0 - float(w) * 0.5)
-	var row := roundi(pt.z + 4.0 - float(h) * 0.5)
-	return Vector2i(col, row)
-
 func ghost_cells(idx: int, anchor: Vector2i) -> Array:
 	var piece: Dictionary = state.tray[idx]
 	var cells: Array = (piece["shape"] as Dictionary)["cells"]
@@ -143,8 +134,7 @@ func ghost_valid(cells: Array) -> bool:
 			return false
 	return true
 
-func on_drag_preview(idx: int, pt: Vector3) -> void:
-	var anchor := anchor_for(idx, pt)
+func on_drag_preview(idx: int, anchor: Vector2i) -> void:
 	var cells := ghost_cells(idx, anchor)
 	var piece: Dictionary = state.tray[idx]
 	board.show_ghost(cells, ghost_valid(cells), int(piece["color"]))
@@ -197,6 +187,7 @@ func back_to_slot(idx: int) -> void:
 func restart_game() -> void:
 	drag.dragging = -1
 	drag.drag_node = null
+	drag.has_target = false
 	board.hide_ghost()
 	state.restart()
 	board.clear_all()

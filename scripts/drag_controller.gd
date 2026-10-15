@@ -7,16 +7,35 @@ var main
 var dragging := -1
 var drag_node: Node3D
 var grab_offset := Vector3.ZERO
-var hold_center := Vector3.ZERO
-var hold_ready := false
+var lift_dir := Vector3(0, 0, -1)
+var lift_blend := 0.0
+var last_target := Vector3.ZERO
+var last_finger := Vector3.ZERO
+var has_target := false
 
 const DRAG_Y = 1.5
+const LIFT_CELLS = 1.0
+const TAPER_BAND = 1.5
 
 func setup(cam: Camera3D, bv: BoardView, st: GameState, mn) -> void:
 	camera = cam
 	board_view = bv
 	state = st
 	main = mn
+
+func _process(delta: float) -> void:
+	if dragging < 0 or drag_node == null or not is_instance_valid(drag_node) or not has_target:
+		return
+	lift_blend = minf(lift_blend + delta * 7.0, 1.0)
+	var piece: Dictionary = state.tray[dragging]
+	var shape: Dictionary = piece["shape"]
+	var w: int = shape["w"]
+	var h: int = shape["h"]
+	var lift := lift_dir * (LIFT_CELLS * lift_taper() * lift_blend)
+	drag_node.position = Vector3(last_target.x + grab_offset.x - w * 0.5 + lift.x, DRAG_Y, last_target.z + grab_offset.z - h * 0.5 + lift.z)
+
+func lift_taper() -> float:
+	return clampf((last_finger.z + 4.0) / TAPER_BAND, 0.0, 1.0)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if camera == null or state == null:
@@ -50,6 +69,21 @@ func drag_plane_point(screen_pos: Vector2):
 	var plane := Plane(Vector3.UP, DRAG_Y)
 	return plane.intersects_ray(from, dir)
 
+func compute_lift_dir() -> Vector3:
+	var vs := camera.get_viewport().get_visible_rect().size
+	var c := vs * 0.5
+	var a = drag_plane_point(c)
+	var b = drag_plane_point(c + Vector2(0, -60.0))
+	if a == null or b == null:
+		return Vector3(0, 0, -1)
+	var va: Vector3 = a
+	var vb: Vector3 = b
+	var d := vb - va
+	d.y = 0.0
+	if d.length() < 0.001:
+		return Vector3(0, 0, -1)
+	return d.normalized()
+
 func begin_drag(screen_pos: Vector2) -> void:
 	var hit := ray_hit(screen_pos)
 	if hit.is_empty():
@@ -70,7 +104,9 @@ func begin_drag(screen_pos: Vector2) -> void:
 	drag_node = node
 	main.on_pickup(idx)
 	grab_offset = Vector3.ZERO
-	hold_ready = false
+	lift_dir = compute_lift_dir()
+	lift_blend = 0.0
+	has_target = false
 	var p0 = plane_point(screen_pos)
 	if p0 != null:
 		var pt0: Vector3 = p0
@@ -79,14 +115,17 @@ func begin_drag(screen_pos: Vector2) -> void:
 		var h0: int = shape0["h"]
 		var center0 := Vector3(node.position.x + w0 * 0.5, 0.0, node.position.z + h0 * 0.5)
 		grab_offset = center0 - Vector3(pt0.x, 0.0, pt0.z)
-		var vs := camera.get_viewport().get_visible_rect().size
-		var c = drag_plane_point(Vector2(vs.x * 0.5, vs.y * 0.40))
-		if c != null:
-			var cc: Vector3 = c
-			hold_center = cc
-			hold_ready = true
-			drag_node.position = Vector3(cc.x + grab_offset.x - w0 * 0.5, DRAG_Y, cc.z + grab_offset.z - h0 * 0.5)
 	move_drag(screen_pos)
+
+func target_anchor() -> Vector2i:
+	var piece: Dictionary = state.tray[dragging]
+	var shape: Dictionary = piece["shape"]
+	var w: int = shape["w"]
+	var h: int = shape["h"]
+	var lift := lift_dir * (LIFT_CELLS * lift_taper())
+	var vx := last_target.x + grab_offset.x + lift.x
+	var vz := last_target.z + grab_offset.z + lift.z
+	return Vector2i(roundi(vx + 4.0 - w * 0.5), roundi(vz + 4.0 - h * 0.5))
 
 func move_drag(screen_pos: Vector2) -> void:
 	if dragging < 0 or drag_node == null:
@@ -96,30 +135,29 @@ func move_drag(screen_pos: Vector2) -> void:
 		return
 	var pt: Vector3 = p
 	var q = drag_plane_point(screen_pos)
-	var piece: Dictionary = state.tray[dragging]
-	var shape: Dictionary = piece["shape"]
-	var w: int = shape["w"]
-	var h: int = shape["h"]
-	if hold_ready:
-		drag_node.position = Vector3(hold_center.x + grab_offset.x - w * 0.5, DRAG_Y, hold_center.z + grab_offset.z - h * 0.5)
-	elif q != null:
-		var qc: Vector3 = q
-		drag_node.position = Vector3(qc.x + grab_offset.x - w * 0.5, DRAG_Y, qc.z + grab_offset.z - h * 0.5)
-	else:
-		drag_node.position = Vector3(pt.x + grab_offset.x - w * 0.5, DRAG_Y, pt.z + grab_offset.z - h * 0.5)
-	main.on_drag_preview(dragging, pt)
+	if q == null:
+		return
+	var qc: Vector3 = q
+	last_target = qc
+	last_finger = pt
+	has_target = true
+	main.on_drag_preview(dragging, target_anchor())
 
 func end_drag(screen_pos: Vector2) -> void:
 	if dragging < 0:
 		return
 	var idx := dragging
+	var anchor := Vector2i(-99, -99)
+	if drag_node != null and is_instance_valid(drag_node) and has_target:
+		var piece: Dictionary = state.tray[idx]
+		var shape: Dictionary = piece["shape"]
+		var w: int = shape["w"]
+		var h: int = shape["h"]
+		var vc := drag_node.position + Vector3(w * 0.5, 0.0, h * 0.5)
+		anchor = Vector2i(roundi(vc.x + 4.0 - w * 0.5), roundi(vc.z + 4.0 - h * 0.5))
 	dragging = -1
 	drag_node = null
 	grab_offset = Vector3.ZERO
-	hold_ready = false
-	var p = plane_point(screen_pos)
-	var anchor := Vector2i(-99, -99)
-	if p != null:
-		var pt: Vector3 = p
-		anchor = main.anchor_for(idx, pt)
+	has_target = false
+	lift_blend = 0.0
 	main.on_drop(idx, anchor)
