@@ -8,7 +8,7 @@ const TRAY_Y = 0.15
 var state: GameState
 var tray_nodes: Array = []
 var time := 0.0
-var app_version := "2.2.1"
+var app_version := "2.2.2"
 var app_code := 0
 
 @onready var board: BoardView = $Board

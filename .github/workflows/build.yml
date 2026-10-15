@@ -60,13 +60,12 @@ jobs:
         run: |
           mkdir -p ~/.config/godot
           keytool -genkeypair -keystore ~/.config/godot/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10950 -storepass android -keypass android -dname "CN=Android Debug, OU=Blockshark, O=Blockshark, C=US"
-          keytool -genkeypair -keystore ~/.config/godot/release.keystore -alias blockshark -keyalg RSA -keysize 2048 -validity 10950 -storepass blockshark3d -keypass blockshark3d -dname "CN=Blockshark, OU=Blockshark, O=Blockshark, C=US"
           printf '[gd_resource type="EditorSettings" load_steps=2 format=3]\n\n[resource]\nexport/android/debug_keystore = "%s/.config/godot/debug.keystore"\nexport/android/debug_keystore_user = "androiddebugkey"\nexport/android/debug_keystore_pass = "android"\nexport/android/java_sdk_path = "%s"\nexport/android/android_sdk_path = "%s"\n' "$HOME" "$JAVA_HOME" "$ANDROID_HOME" > ~/.config/godot/editor_settings-4.5.tres
           cat ~/.config/godot/editor_settings-4.5.tres
       - name: Stamp version
         run: |
           TAG="${GITHUB_REF_NAME}"
-          if [[ "$TAG" == v* ]]; then NAME="${TAG#v}"; else NAME="2.2.1-dev.${GITHUB_RUN_NUMBER}"; fi
+          if [[ "$TAG" == v* ]]; then NAME="${TAG#v}"; else NAME="2.2.2-dev.${GITHUB_RUN_NUMBER}"; fi
           printf '[app]\nversion_name="%s"\nversion_code=%s\n' "$NAME" "$GITHUB_RUN_NUMBER" > version.cfg
           sed -i "s/^version\/name=.*/version\/name=\"$NAME\"/" export_presets.cfg
           sed -i "s/^version\/code=.*/version\/code=$GITHUB_RUN_NUMBER/" export_presets.cfg
@@ -76,9 +75,9 @@ jobs:
         env:
           GODOT_ANDROID_KEYSTORE_RELEASE_PATH: ${{ github.workspace }}/../release.keystore
           GODOT_ANDROID_KEYSTORE_RELEASE_USER: blockshark
-          GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD: blockshark3d
+          GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
         run: |
-          cp ~/.config/godot/release.keystore ../release.keystore
+          echo "${{ secrets.RELEASE_KEYSTORE_B64 }}" | base64 -d > ../release.keystore
           mkdir -p dist
           /tmp/Godot_v4.5-stable_linux.x86_64 --headless --path . --export-release "Android" dist/blockshark3d.apk
           ls -lh dist/
