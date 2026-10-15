@@ -1,4 +1,4 @@
-name: Build APK
+name: Build
 
 on:
   push:
@@ -9,6 +9,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 env:
   GODOT_VERSION: 4.5-stable
@@ -54,7 +56,7 @@ jobs:
           chmod +x /tmp/Godot_v4.5-stable_linux.x86_64
           curl -sL "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v4.5-stable_export_templates.tpz" -o /tmp/templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/4.5.stable
-          unzip -o -j /tmp/templates.tpz "templates/android_debug.apk" "templates/android_release.apk" "templates/version.txt" -d ~/.local/share/godot/export_templates/4.5.stable/
+          unzip -o -j /tmp/templates.tpz "templates/android_debug.apk" "templates/android_release.apk" "templates/version.txt" "templates/web_nothreads_release.zip" -d ~/.local/share/godot/export_templates/4.5.stable/
           unzip -o -j /tmp/templates.tpz "templates/android_source.zip" -d /tmp/tplsrc
           mkdir -p android/build
           unzip -o -q /tmp/tplsrc/android_source.zip -d android/build
@@ -96,3 +98,37 @@ jobs:
         with:
           files: dist/blockshark3d.apk
           generate_release_notes: true
+
+  web:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Godot editor and web templates
+        run: |
+          curl -sL "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v4.5-stable_linux.x86_64.zip" -o /tmp/godot.zip
+          unzip -o -j /tmp/godot.zip -d /tmp
+          chmod +x /tmp/Godot_v4.5-stable_linux.x86_64
+          curl -sL "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v4.5-stable_export_templates.tpz" -o /tmp/templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/4.5.stable
+          unzip -o -j /tmp/templates.tpz "templates/web_nothreads_release.zip" "templates/version.txt" -d ~/.local/share/godot/export_templates/4.5.stable/
+          rm /tmp/templates.tpz
+      - name: Export web build
+        run: |
+          mkdir -p dist/web
+          /tmp/Godot_v4.5-stable_linux.x86_64 --headless --path . --export-release "Web" dist/web/index.html
+          ls -lh dist/web/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/web
+
+  pages:
+    needs: web
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deploy

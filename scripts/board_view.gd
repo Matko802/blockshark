@@ -72,10 +72,10 @@ func show_ghost(cells: Array, valid: bool, _color: int) -> void:
 		mi.mesh = Mats.box()
 		mi.scale = Vector3(CUBE, CUBE, CUBE)
 		mi.position = Vector3(v.x - 3.5, REST_Y, v.y - 3.5)
-			if valid:
-				mi.material_override = Mats.ghost_grey()
-			else:
-				mi.material_override = Mats.ghost_bad()
+		if valid:
+			mi.material_override = Mats.ghost_grey()
+		else:
+			mi.material_override = Mats.ghost_bad()
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mi)
 		ghost_nodes.append(mi)
