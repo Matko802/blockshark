@@ -21,6 +21,7 @@ static var _mats: Array = []
 static var _ghost_mats: Array = []
 static var _empty_mat: StandardMaterial3D
 static var _ghost_bad: StandardMaterial3D
+static var _ghost_grey: StandardMaterial3D
 static var _base_mat: StandardMaterial3D
 
 static func box() -> BoxMesh:
@@ -86,7 +87,15 @@ static func base() -> StandardMaterial3D:
 static func ghost_bad() -> StandardMaterial3D:
 	if _ghost_bad == null:
 		_ghost_bad = StandardMaterial3D.new()
-		_ghost_bad.albedo_color = Color(1.0, 0.2, 0.25, 0.4)
+		_ghost_bad.albedo_color = Color(1.0, 0.05, 0.10, 0.75)
 		_ghost_bad.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		_ghost_bad.roughness = 0.6
 	return _ghost_bad
+
+static func ghost_grey() -> StandardMaterial3D:
+	if _ghost_grey == null:
+		_ghost_grey = StandardMaterial3D.new()
+		_ghost_grey.albedo_color = Color(0.75, 0.75, 0.78, 0.55)
+		_ghost_grey.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_ghost_grey.roughness = 0.6
+	return _ghost_grey
