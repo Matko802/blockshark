@@ -4,6 +4,7 @@ class_name Mats
 const STONE: Texture2D = preload("res://assets/textures/stone.png")
 const BEDROCK: Texture2D = preload("res://assets/textures/bedrock.png")
 const GRASS: Texture2D = preload("res://assets/textures/grass_top.png")
+const BOARD_TEX: Texture2D = preload("res://assets/textures/board_grass.png")
 
 const COLORS = [
 	Color(0.94, 0.27, 0.27),
@@ -20,6 +21,7 @@ static var _box: BoxMesh
 static var _mats: Array = []
 static var _ghost_mats: Array = []
 static var _empty_mat: StandardMaterial3D
+static var _board_mat: StandardMaterial3D
 static var _ghost_bad: StandardMaterial3D
 static var _ghost_grey: StandardMaterial3D
 static var _base_mat: StandardMaterial3D
@@ -37,7 +39,7 @@ static func for_color(i: int) -> StandardMaterial3D:
 		var m := StandardMaterial3D.new()
 		m.albedo_color = COLORS[i % COLORS.size()]
 		m.albedo_texture = STONE
-		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 		m.roughness = 0.35
 		m.metallic = 0.05
 		_mats[i] = m
@@ -60,10 +62,9 @@ static func unique_color(i: int) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.albedo_color = COLORS[i % COLORS.size()]
 	m.albedo_texture = STONE
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	m.roughness = 0.35
 	m.metallic = 0.05
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	return m
 
 static func empty() -> StandardMaterial3D:
@@ -71,16 +72,25 @@ static func empty() -> StandardMaterial3D:
 		_empty_mat = StandardMaterial3D.new()
 		_empty_mat.albedo_color = Color(0.8, 0.8, 0.8)
 		_empty_mat.albedo_texture = GRASS
-		_empty_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		_empty_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 		_empty_mat.roughness = 0.9
 	return _empty_mat
+
+static func board() -> StandardMaterial3D:
+	if _board_mat == null:
+		_board_mat = StandardMaterial3D.new()
+		_board_mat.albedo_color = Color(0.8, 0.8, 0.8)
+		_board_mat.albedo_texture = BOARD_TEX
+		_board_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+		_board_mat.roughness = 0.9
+	return _board_mat
 
 static func base() -> StandardMaterial3D:
 	if _base_mat == null:
 		_base_mat = StandardMaterial3D.new()
 		_base_mat.albedo_color = Color(0.55, 0.58, 0.72)
 		_base_mat.albedo_texture = BEDROCK
-		_base_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		_base_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 		_base_mat.roughness = 0.9
 	return _base_mat
 

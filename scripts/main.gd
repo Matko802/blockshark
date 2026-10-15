@@ -1,9 +1,9 @@
 extends Node3D
 
-const TRAY_Z = 6.3
+const TRAY_Z = 1.0
 const TRAY_X = [-2.9, 0.0, 2.9]
 const TRAY_SCALE = 0.5
-const TRAY_Y = 0.15
+const TRAY_Y = -5.7
 
 var state: GameState
 var tray_nodes: Array = []
@@ -23,62 +23,11 @@ var app_code := 0
 @onready var sun: DirectionalLight3D = $Sun
 @onready var world_env: WorldEnvironment = $WorldEnvironment
 
-const NIGHT_TOP = Color(0.008, 0.012, 0.045)
-const NIGHT_HOR = Color(0.10, 0.14, 0.30)
-const DAY_TOP = Color(0.25, 0.50, 0.95)
-const DAY_HOR = Color(0.70, 0.85, 1.00)
-const DUSK = Color(1.00, 0.45, 0.20)
-const SUN_WARM = Color(1.00, 0.55, 0.30)
-const SUN_WHITE = Color(1.00, 1.00, 1.00)
-const MOON_TINT = Color(0.60, 0.75, 1.00)
-
-func make_stars() -> void:
-	var img := Image.create(512, 256, false, Image.FORMAT_RGB8)
-	img.fill(Color.BLACK)
-	for i in 500:
-		var v := randf_range(0.35, 1.0)
-		img.set_pixel(randi_range(0, 511), randi_range(0, 255), Color(v, v, v))
-	var mat := world_env.environment.sky.sky_material as ProceduralSkyMaterial
-	if mat != null:
-		mat.sky_cover = ImageTexture.create_from_image(img)
-
-func sun_elevation(h: float) -> float:
-	if h >= 6.0 and h < 18.0:
-		return sin((h - 6.0) / 12.0 * PI) * 65.0
-	var nt := fposmod(h - 18.0, 24.0) / 12.0
-	return sin(nt * PI) * 35.0
-
-func update_sky() -> void:
-	var dt := Time.get_datetime_dict_from_system()
-	var h := float(dt["hour"]) + float(dt["minute"]) / 60.0
-	var day := h >= 6.0 and h < 18.0
-	var elev := sun_elevation(h)
-	if day:
-		var t := (h - 6.0) / 12.0
-		sun.rotation = Vector3(deg_to_rad(-elev), deg_to_rad(lerpf(-60.0, 60.0, t)), 0.0)
-	else:
-		var nt := fposmod(h - 18.0, 24.0) / 12.0
-		sun.rotation = Vector3(deg_to_rad(-elev), deg_to_rad(lerpf(120.0, 240.0, nt)), 0.0)
-	var s := sin(deg_to_rad(elev)) if day else -0.25
-	var day_f := smoothstep(-0.08, 0.30, s)
-	var dusk_f := clampf(1.0 - absf(s) / 0.30, 0.0, 1.0) * smoothstep(-0.50, -0.02, s)
-	var mat := world_env.environment.sky.sky_material as ProceduralSkyMaterial
-	if mat != null:
-		mat.sky_top_color = NIGHT_TOP.lerp(DAY_TOP, day_f) + DUSK * (dusk_f * 0.30)
-		var hor := NIGHT_HOR.lerp(DAY_HOR, day_f) + DUSK * (dusk_f * 0.70)
-		mat.sky_horizon_color = hor
-		mat.ground_horizon_color = Color(hor.r * 0.45, hor.g * 0.45, hor.b * 0.45)
-		mat.ground_bottom_color = Color(hor.r * 0.15, hor.g * 0.15, hor.b * 0.15)
-		mat.sky_energy_multiplier = lerpf(0.25, 1.0, day_f)
-		mat.ground_energy_multiplier = lerpf(0.30, 1.0, day_f)
-		mat.sky_cover_modulate = Color(1, 1, 1) * (1.0 - day_f)
-	if day:
-		sun.light_color = SUN_WARM.lerp(SUN_WHITE, clampf(s / 0.5, 0.0, 1.0))
-		sun.light_energy = lerpf(0.0, 1.15, smoothstep(-0.03, 0.20, s))
-	else:
-		sun.light_color = MOON_TINT
-		sun.light_energy = 0.12
-	world_env.environment.ambient_light_energy = lerpf(0.35, 0.9, day_f)
+func apply_fixed_light() -> void:
+	sun.rotation = Vector3(-0.5, -0.55, 0.0)
+	sun.light_color = Color(1.0, 0.98, 0.94)
+	sun.light_energy = 1.15
+	world_env.environment.ambient_light_energy = 0.85
 
 func load_version() -> void:
 	var cfg := ConfigFile.new()
@@ -104,17 +53,11 @@ func _ready() -> void:
 	load_version()
 	state = GameState.new()
 	sound.muted = state.muted
-	camera.position = Vector3(0, 12.5, 9.5)
-	camera.look_at(Vector3(0, 0, 1.5))
+	camera.position = Vector3(0, -1.0, 16.0)
+	camera.look_at(Vector3(0, -1.0, 0.0))
 	fit_camera()
 	get_viewport().size_changed.connect(fit_camera)
-	make_stars()
-	update_sky()
-	var sky_timer := Timer.new()
-	sky_timer.wait_time = 60.0
-	sky_timer.autostart = true
-	add_child(sky_timer)
-	sky_timer.timeout.connect(update_sky)
+	apply_fixed_light()
 	drag.setup(camera, board, state, self)
 	hud.setup(self, version_text())
 	updater.setup(self, hud, app_version)
@@ -136,7 +79,7 @@ func _process(delta: float) -> void:
 func fit_camera() -> void:
 	var vs := get_viewport().get_visible_rect().size
 	var aspect := vs.x / maxf(vs.y, 1.0)
-	camera.size = maxf(9.0, 12.0 * aspect)
+	camera.size = maxf(10.0, 12.0 * aspect)
 
 func slot_pos(i: int) -> Vector3:
 	return Vector3(float(tray_x.get(i, TRAY_X[i])), TRAY_Y, TRAY_Z)
@@ -216,6 +159,10 @@ func set_node_dim(node: Node3D, a: float) -> void:
 				var c := m.albedo_color
 				c.a = a
 				m.albedo_color = c
+				if a >= 1.0:
+					m.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+				else:
+					m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 
 func on_pickup(idx: int) -> void:
 	var node := tray_node(idx)

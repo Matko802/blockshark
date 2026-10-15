@@ -1,7 +1,20 @@
 extends Node
 class_name SharkSound
 
-const RATE = 22050
+const PICKUP := preload("res://assets/sounds/pickup.ogg")
+const PLACE := [
+	preload("res://assets/sounds/place1.ogg"),
+	preload("res://assets/sounds/place2.ogg"),
+	preload("res://assets/sounds/place3.ogg"),
+]
+const BREAK := [
+	preload("res://assets/sounds/clear1.ogg"),
+	preload("res://assets/sounds/clear2.ogg"),
+]
+const BREAK_LOW := preload("res://assets/sounds/clear_low.ogg")
+const TRAY_SND := preload("res://assets/sounds/tray.ogg")
+const INVALID_SND := preload("res://assets/sounds/invalid.ogg")
+const GAMEOVER := preload("res://assets/sounds/gameover.ogg")
 
 var players: Array = []
 var cursor := 0
@@ -10,99 +23,43 @@ var rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	rng.randomize()
-	for i in 6:
+	for i in 8:
 		var pl := AudioStreamPlayer.new()
 		add_child(pl)
 		players.append(pl)
 
-func seg_tone(freq: float, dur: float, vol: float) -> PackedByteArray:
-	var n := int(RATE * dur)
-	var out := PackedByteArray()
-	out.resize(n)
-	for i in n:
-		var t := float(i) / RATE
-		var env := 1.0 - float(i) / float(n)
-		var s := sin(TAU * freq * t)
-		out[i] = clampi(int(128.0 + 100.0 * vol * env * s), 0, 255)
-	return out
-
-func seg_click(freq: float, dur: float, vol: float) -> PackedByteArray:
-	var n := int(RATE * dur)
-	var out := PackedByteArray()
-	out.resize(n)
-	var f := freq * rng.randf_range(0.85, 1.18)
-	var phase := rng.randf_range(0.0, TAU)
-	for i in n:
-		var t := float(i) / RATE
-		var env := exp(-t * 120.0)
-		var noise := rng.randf_range(-1.0, 1.0)
-		var s := noise * 0.55 + sin(TAU * f * t + phase) * 0.45
-		out[i] = clampi(int(128.0 + 110.0 * vol * env * s), 0, 255)
-	return out
-
-func seg_thock(freq: float, dur: float, vol: float) -> PackedByteArray:
-	var n := int(RATE * dur)
-	var out := PackedByteArray()
-	out.resize(n)
-	var f := freq * rng.randf_range(0.92, 1.08)
-	for i in n:
-		var t := float(i) / RATE
-		var body := sin(TAU * f * t) * exp(-t * 28.0)
-		var snap := rng.randf_range(-1.0, 1.0) * exp(-t * 160.0) * 0.7
-		var s := body * 0.8 + snap
-		out[i] = clampi(int(128.0 + 110.0 * vol * s), 0, 255)
-	return out
-
-func seg_silence(dur: float) -> PackedByteArray:
-	var out := PackedByteArray()
-	out.resize(int(RATE * dur))
-	for i in out.size():
-		out[i] = 128
-	return out
-
-func stream_of(parts: Array) -> AudioStreamWAV:
-	var data := PackedByteArray()
-	for part in parts:
-		data.append_array(part)
-	var w := AudioStreamWAV.new()
-	w.format = AudioStreamWAV.FORMAT_8_BITS
-	w.mix_rate = RATE
-	w.data = data
-	return w
-
-func play_stream(s: AudioStreamWAV) -> void:
+func play_sfx(s: AudioStream, pitch := 1.0, vol_db := 0.0) -> void:
 	if muted or players.is_empty():
 		return
 	var pl: AudioStreamPlayer = players[cursor] as AudioStreamPlayer
 	cursor = (cursor + 1) % players.size()
 	pl.stream = s
+	pl.pitch_scale = pitch
+	pl.volume_db = vol_db
 	pl.play()
 
-func chime(freq: float, vol: float) -> PackedByteArray:
-	var out := seg_click(freq, 0.04, vol)
-	out.append_array(seg_tone(freq, 0.14, vol))
-	return out
+func ui() -> void:
+	play_sfx(PICKUP, rng.randf_range(1.25, 1.35), -5.0)
 
 func select() -> void:
-	play_stream(stream_of([seg_click(2600.0, 0.035, 0.5)]))
+	play_sfx(PICKUP, rng.randf_range(0.96, 1.06), -2.0)
 
 func place() -> void:
-	play_stream(stream_of([seg_thock(rng.randf_range(200.0, 240.0), 0.09, 0.65)]))
-	play_stream(stream_of([seg_click(3200.0, 0.025, 0.4)]))
+	play_sfx(PLACE[rng.randi_range(0, PLACE.size() - 1)], rng.randf_range(0.95, 1.05))
 
 func tray() -> void:
-	play_stream(stream_of([seg_click(1800.0, 0.04, 0.4), seg_silence(0.03), seg_click(2400.0, 0.04, 0.4)]))
+	play_sfx(TRAY_SND, rng.randf_range(0.97, 1.03), -3.0)
 
 func cleared(lines: int) -> void:
-	var ladder := [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5]
-	var parts: Array = []
 	var n := mini(lines + 1, 5)
 	for i in n:
-		parts.append(chime(float(ladder[i]), 0.55))
-	play_stream(stream_of(parts))
+		play_sfx(BREAK[rng.randi_range(0, BREAK.size() - 1)], 1.0 + float(i) * 0.12, -1.5)
+		await get_tree().create_timer(0.07).timeout
+	if lines >= 2:
+		play_sfx(BREAK_LOW, 0.7, -2.0)
 
 func invalid() -> void:
-	play_stream(stream_of([seg_thock(110.0, 0.14, 0.6)]))
+	play_sfx(INVALID_SND, rng.randf_range(0.97, 1.03), -2.0)
 
 func over() -> void:
-	play_stream(stream_of([seg_tone(523.25, 0.15, 0.55), seg_tone(440.0, 0.15, 0.55), seg_tone(349.23, 0.15, 0.55), seg_tone(293.66, 0.2, 0.55)]))
+	play_sfx(GAMEOVER, 1.0, -1.0)

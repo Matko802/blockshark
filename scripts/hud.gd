@@ -151,7 +151,7 @@ func build_settings(root: Control) -> void:
 	restart_button.pressed.connect(_on_restart_pressed)
 	box.add_child(restart_button)
 	var update_button := sheet_button("Check for updates")
-	update_button.pressed.connect(main.check_updates)
+	update_button.pressed.connect(_on_check_pressed)
 	box.add_child(update_button)
 	settings_version = title_label(version_text, 20, M3Kit.INK_DIM)
 	box.add_child(settings_version)
@@ -163,8 +163,13 @@ func build_settings(root: Control) -> void:
 	box.add_child(close_button)
 
 func _on_restart_pressed() -> void:
-	hide_settings()
+	main.sound.ui()
+	settings_dim.visible = false
 	main.restart_game()
+
+func _on_check_pressed() -> void:
+	main.sound.ui()
+	main.check_updates()
 
 func build_update(root: Control) -> void:
 	update_dim = dim_layer()
@@ -213,7 +218,7 @@ func build_over(root: Control) -> void:
 	over_score = title_label("", 28, M3Kit.INK_DIM)
 	box.add_child(over_score)
 	var again := sheet_button("Play Again")
-	again.pressed.connect(main.restart_game)
+	again.pressed.connect(_on_again_pressed)
 	box.add_child(again)
 
 func refresh(score: int, best: int, combo: int) -> void:
@@ -230,6 +235,10 @@ func show_gain(gained: int) -> void:
 	var tw := create_tween().set_parallel(true)
 	tw.tween_property(gain_label, "modulate:a", 0.0, 0.9).set_delay(0.25)
 
+func _on_again_pressed() -> void:
+	main.sound.ui()
+	main.restart_game()
+
 func show_over(score: int, best: int) -> void:
 	over_score.text = "Score " + str(score) + "   Best " + str(best)
 	over_dim.visible = true
@@ -241,10 +250,12 @@ func set_muted(m: bool) -> void:
 	sound_switch.set_pressed_no_signal(not m)
 
 func show_settings() -> void:
+	main.sound.ui()
 	settings_version.text = version_text
 	settings_dim.visible = true
 
 func hide_settings() -> void:
+	main.sound.ui()
 	settings_dim.visible = false
 
 func show_update_dialog(title: String, body: String, primary_text: String, show_primary: bool) -> void:
@@ -255,7 +266,9 @@ func show_update_dialog(title: String, body: String, primary_text: String, show_
 	update_dim.visible = true
 
 func hide_update() -> void:
+	main.sound.ui()
 	update_dim.visible = false
 
 func _on_update_go() -> void:
+	main.sound.ui()
 	main.updater.on_primary()
