@@ -36,9 +36,9 @@ func _process(delta: float) -> void:
 	drag_node.position = Vector3(HOME.x + drag_accum.x - w * 0.5 + lift.x, DRAG_Y, HOME.z + drag_accum.z - h * 0.5 + lift.z)
 
 func current_gain() -> float:
-	var base := clampf(camera.size / 9.0, 0.6, 1.6)
+	var base := clampf(camera.size / 9.0, 0.6, 1.6) * 1.5
 	if last_valid:
-		return base * 0.65
+		return base * 0.8
 	return base
 
 func lift_taper() -> float:
