@@ -8,7 +8,7 @@ const TRAY_Y = 0.15
 var state: GameState
 var tray_nodes: Array = []
 var time := 0.0
-var app_version := "2.3.2"
+var app_version := "2.3.3"
 var app_code := 0
 
 @onready var board: BoardView = $Board
@@ -187,7 +187,7 @@ func back_to_slot(idx: int) -> void:
 func restart_game() -> void:
 	drag.dragging = -1
 	drag.drag_node = null
-	drag.has_target = false
+	drag.has_pointer = false
 	board.hide_ghost()
 	state.restart()
 	board.clear_all()

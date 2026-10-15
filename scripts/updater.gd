@@ -4,7 +4,7 @@ const TAGS_URL = "https://api.github.com/repos/Matko802/blockshark/tags?per_page
 
 var main
 var hud
-var current := "2.3.2"
+var current := "2.3.3"
 var http: HTTPRequest
 var pending_silent := false
 var pending_tag := ""
