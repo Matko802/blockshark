@@ -7,6 +7,8 @@ var main
 var dragging := -1
 var drag_node: Node3D
 var grab_offset := Vector3.ZERO
+var hold_center := Vector3.ZERO
+var hold_ready := false
 
 const DRAG_Y = 1.5
 
@@ -68,6 +70,7 @@ func begin_drag(screen_pos: Vector2) -> void:
 	drag_node = node
 	main.on_pickup(idx)
 	grab_offset = Vector3.ZERO
+	hold_ready = false
 	var p0 = plane_point(screen_pos)
 	if p0 != null:
 		var pt0: Vector3 = p0
@@ -76,6 +79,13 @@ func begin_drag(screen_pos: Vector2) -> void:
 		var h0: int = shape0["h"]
 		var center0 := Vector3(node.position.x + w0 * 0.5, 0.0, node.position.z + h0 * 0.5)
 		grab_offset = center0 - Vector3(pt0.x, 0.0, pt0.z)
+		var vs := camera.get_viewport().get_visible_rect().size
+		var c = drag_plane_point(Vector2(vs.x * 0.5, vs.y * 0.40))
+		if c != null:
+			var cc: Vector3 = c
+			hold_center = cc
+			hold_ready = true
+			drag_node.position = Vector3(cc.x + grab_offset.x - w0 * 0.5, DRAG_Y, cc.z + grab_offset.z - h0 * 0.5)
 	move_drag(screen_pos)
 
 func move_drag(screen_pos: Vector2) -> void:
@@ -90,7 +100,9 @@ func move_drag(screen_pos: Vector2) -> void:
 	var shape: Dictionary = piece["shape"]
 	var w: int = shape["w"]
 	var h: int = shape["h"]
-	if q != null:
+	if hold_ready:
+		drag_node.position = Vector3(hold_center.x + grab_offset.x - w * 0.5, DRAG_Y, hold_center.z + grab_offset.z - h * 0.5)
+	elif q != null:
 		var qc: Vector3 = q
 		drag_node.position = Vector3(qc.x + grab_offset.x - w * 0.5, DRAG_Y, qc.z + grab_offset.z - h * 0.5)
 	else:
@@ -104,6 +116,7 @@ func end_drag(screen_pos: Vector2) -> void:
 	dragging = -1
 	drag_node = null
 	grab_offset = Vector3.ZERO
+	hold_ready = false
 	var p = plane_point(screen_pos)
 	var anchor := Vector2i(-99, -99)
 	if p != null:
