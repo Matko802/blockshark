@@ -8,7 +8,7 @@ const TRAY_Y = 0.15
 var state: GameState
 var tray_nodes: Array = []
 var time := 0.0
-var app_version := "2.1.0"
+var app_version := "2.2.0"
 var app_code := 0
 
 @onready var board: BoardView = $Board
@@ -59,7 +59,7 @@ func _process(delta: float) -> void:
 func fit_camera() -> void:
 	var vs := get_viewport().get_visible_rect().size
 	var aspect := vs.x / maxf(vs.y, 1.0)
-	camera.size = maxf(10.4, 14.0 * aspect)
+	camera.size = maxf(11.8, 15.8 * aspect)
 
 func slot_pos(i: int) -> Vector3:
 	return Vector3(TRAY_X[i], TRAY_Y, TRAY_Z)

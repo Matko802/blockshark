@@ -56,33 +56,39 @@ jobs:
           mkdir -p ~/.local/share/godot/export_templates/4.5.stable
           unzip -o -j /tmp/templates.tpz "templates/android_debug.apk" "templates/android_release.apk" "templates/version.txt" -d ~/.local/share/godot/export_templates/4.5.stable/
           rm /tmp/templates.tpz
-      - name: Configure Godot editor settings and debug keystore
+      - name: Configure Godot editor settings and keystores
         run: |
           mkdir -p ~/.config/godot
           keytool -genkeypair -keystore ~/.config/godot/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10950 -storepass android -keypass android -dname "CN=Android Debug, OU=Blockshark, O=Blockshark, C=US"
+          keytool -genkeypair -keystore ~/.config/godot/release.keystore -alias blockshark -keyalg RSA -keysize 2048 -validity 10950 -storepass blockshark3d -keypass blockshark3d -dname "CN=Blockshark, OU=Blockshark, O=Blockshark, C=US"
           printf '[gd_resource type="EditorSettings" load_steps=2 format=3]\n\n[resource]\nexport/android/debug_keystore = "%s/.config/godot/debug.keystore"\nexport/android/debug_keystore_user = "androiddebugkey"\nexport/android/debug_keystore_pass = "android"\nexport/android/java_sdk_path = "%s"\nexport/android/android_sdk_path = "%s"\n' "$HOME" "$JAVA_HOME" "$ANDROID_HOME" > ~/.config/godot/editor_settings-4.5.tres
           cat ~/.config/godot/editor_settings-4.5.tres
       - name: Stamp version
         run: |
           TAG="${GITHUB_REF_NAME}"
-          if [[ "$TAG" == v* ]]; then NAME="${TAG#v}"; else NAME="2.1.0-dev.${GITHUB_RUN_NUMBER}"; fi
+          if [[ "$TAG" == v* ]]; then NAME="${TAG#v}"; else NAME="2.2.0-dev.${GITHUB_RUN_NUMBER}"; fi
           printf '[app]\nversion_name="%s"\nversion_code=%s\n' "$NAME" "$GITHUB_RUN_NUMBER" > version.cfg
           sed -i "s/^version\/name=.*/version\/name=\"$NAME\"/" export_presets.cfg
           sed -i "s/^version\/code=.*/version\/code=$GITHUB_RUN_NUMBER/" export_presets.cfg
           cat version.cfg
           grep -E "^version/(name|code)" export_presets.cfg
-      - name: Export debug APK
+      - name: Export release APK
+        env:
+          GODOT_ANDROID_KEYSTORE_RELEASE_PATH: ${{ github.workspace }}/../release.keystore
+          GODOT_ANDROID_KEYSTORE_RELEASE_USER: blockshark
+          GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD: blockshark3d
         run: |
+          cp ~/.config/godot/release.keystore ../release.keystore
           mkdir -p dist
-          /tmp/Godot_v4.5-stable_linux.x86_64 --headless --path . --export-debug "Android" dist/blockshark3d-debug.apk
+          /tmp/Godot_v4.5-stable_linux.x86_64 --headless --path . --export-release "Android" dist/blockshark3d.apk
           ls -lh dist/
       - uses: actions/upload-artifact@v4
         with:
           name: blockshark3d-apk
-          path: dist/blockshark3d-debug.apk
+          path: dist/blockshark3d.apk
       - name: Release on tag
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/blockshark3d-debug.apk
+          files: dist/blockshark3d.apk
           generate_release_notes: true
