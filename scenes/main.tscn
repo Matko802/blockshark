@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/board_view.gd" id="2"]
@@ -7,9 +7,21 @@
 [ext_resource type="Script" path="res://scripts/hud.gd" id="5"]
 [ext_resource type="Script" path="res://scripts/updater.gd" id="6"]
 
+[sub_resource type="ProceduralSkyMaterial" id="sky"]
+sky_top_color = Color(0.008, 0.012, 0.045, 1)
+sky_horizon_color = Color(0.10, 0.14, 0.30, 1)
+sky_curve = 0.18
+ground_bottom_color = Color(0.0, 0.0, 0.0, 1)
+ground_horizon_color = Color(0.04, 0.05, 0.12, 1)
+sun_angle_max = 12.0
+
+[sub_resource type="Sky" id="skyres"]
+sky_material = SubResource("sky")
+
 [sub_resource type="Environment" id="env"]
-background_mode = 1
+background_mode = 2
 background_color = Color(0.03, 0.04, 0.09, 1)
+sky = SubResource("skyres")
 ambient_light_source = 2
 ambient_light_color = Color(0.55, 0.6, 0.75, 1)
 ambient_light_energy = 0.7

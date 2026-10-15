@@ -15,12 +15,6 @@ func key(r: int, c: int) -> String:
 	return str(r) + "," + str(c)
 
 func build() -> void:
-	var base := MeshInstance3D.new()
-	base.mesh = Mats.box()
-	base.scale = Vector3(8.7, 0.3, 8.7)
-	base.position = Vector3(0, -0.28, 0)
-	base.material_override = Mats.base()
-	add_child(base)
 	for r in SIZE:
 		for c in SIZE:
 			var mi := MeshInstance3D.new()

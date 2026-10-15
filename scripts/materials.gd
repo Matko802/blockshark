@@ -3,6 +3,7 @@ class_name Mats
 
 const STONE: Texture2D = preload("res://assets/textures/stone.png")
 const BEDROCK: Texture2D = preload("res://assets/textures/bedrock.png")
+const GRASS: Texture2D = preload("res://assets/textures/grass_top.png")
 
 const COLORS = [
 	Color(0.94, 0.27, 0.27),
@@ -67,7 +68,9 @@ static func unique_color(i: int) -> StandardMaterial3D:
 static func empty() -> StandardMaterial3D:
 	if _empty_mat == null:
 		_empty_mat = StandardMaterial3D.new()
-		_empty_mat.albedo_color = Color(0.13, 0.16, 0.32)
+		_empty_mat.albedo_color = Color(0.8, 0.8, 0.8)
+		_empty_mat.albedo_texture = GRASS
+		_empty_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 		_empty_mat.roughness = 0.9
 	return _empty_mat
 

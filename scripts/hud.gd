@@ -9,7 +9,6 @@ var gain_label: Label
 var hint_label: Label
 var top_box: VBoxContainer
 var settings_button: Button
-var restart_button: Button
 var over_dim: ColorRect
 var over_score: Label
 var settings_dim: ColorRect
@@ -62,13 +61,13 @@ func sheet_card() -> PanelContainer:
 	return p
 
 func sheet_title(text: String) -> Label:
-	return title_label(text, 30, M3Kit.INK)
+	return title_label(text, 36, M3Kit.INK)
 
 func sheet_button(text: String) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.add_theme_font_size_override("font_size", 24)
-	b.custom_minimum_size = Vector2(240, 60)
+	b.add_theme_font_size_override("font_size", 26)
+	b.custom_minimum_size = Vector2(300, 68)
 	M3Kit.style_button(b)
 	return b
 
@@ -108,20 +107,9 @@ func build() -> void:
 	left_box.offset_bottom = 100
 	left_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(left_box)
-	settings_button = M3Kit.icon_button("settings", 30)
+	settings_button = M3Kit.icon_button("settings", 34)
 	settings_button.pressed.connect(show_settings)
 	left_box.add_child(settings_button)
-	var right_box := HBoxContainer.new()
-	right_box.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	right_box.offset_left = -80
-	right_box.offset_top = 36
-	right_box.offset_right = -16
-	right_box.offset_bottom = 100
-	right_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(right_box)
-	restart_button = M3Kit.icon_button("refresh", 30)
-	restart_button.pressed.connect(main.restart_game)
-	right_box.add_child(restart_button)
 	hint_label = title_label("Drag blocks onto the board", 22, M3Kit.INK_DIM)
 	hint_label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	hint_label.offset_left = 16
@@ -145,30 +133,38 @@ func build_settings(root: Control) -> void:
 	center.add_child(card)
 	var box := VBoxContainer.new()
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_theme_constant_override("separation", 12)
+	box.custom_minimum_size = Vector2(440, 0)
+	box.add_theme_constant_override("separation", 16)
 	card.add_child(box)
 	box.add_child(sheet_title("Settings"))
 	var sound_row := HBoxContainer.new()
 	sound_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	sound_row.add_theme_constant_override("separation", 12)
 	box.add_child(sound_row)
-	sound_row.add_child(M3Kit.icon_label("volume_up", 30, M3Kit.INK))
-	var sound_label := title_label("Sound", 24, M3Kit.INK)
+	sound_row.add_child(M3Kit.icon_label("volume_up", 34, M3Kit.INK))
+	var sound_label := title_label("Sound", 26, M3Kit.INK)
 	sound_row.add_child(sound_label)
 	sound_switch = CheckButton.new()
 	sound_switch.toggled.connect(main.set_sound_enabled)
 	sound_row.add_child(sound_switch)
+	var restart_button := sheet_button("Restart")
+	restart_button.pressed.connect(_on_restart_pressed)
+	box.add_child(restart_button)
 	var update_button := sheet_button("Check for updates")
 	update_button.pressed.connect(main.check_updates)
 	box.add_child(update_button)
-	settings_version = title_label(version_text, 18, M3Kit.INK_DIM)
+	settings_version = title_label(version_text, 20, M3Kit.INK_DIM)
 	box.add_child(settings_version)
 	var close_button := Button.new()
 	close_button.text = "Close"
-	close_button.add_theme_font_size_override("font_size", 24)
+	close_button.add_theme_font_size_override("font_size", 26)
 	M3Kit.style_text_button(close_button)
 	close_button.pressed.connect(hide_settings)
 	box.add_child(close_button)
+
+func _on_restart_pressed() -> void:
+	hide_settings()
+	main.restart_game()
 
 func build_update(root: Control) -> void:
 	update_dim = dim_layer()
