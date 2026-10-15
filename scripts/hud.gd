@@ -1,44 +1,34 @@
 extends CanvasLayer
 
 var main
+var version_text := ""
 var score_label: Label
 var best_label: Label
 var combo_label: Label
 var gain_label: Label
 var hint_label: Label
 var top_box: VBoxContainer
-var buttons_row: HBoxContainer
+var settings_button: Button
 var restart_button: Button
 var over_dim: ColorRect
 var over_score: Label
-var mute_button: Button
+var settings_dim: ColorRect
+var sound_switch: CheckButton
+var settings_version: Label
+var update_dim: ColorRect
+var update_title: Label
+var update_body: Label
+var update_go: Button
+var pending_apk := ""
 
-func setup(mn) -> void:
+func setup(mn, ver: String) -> void:
 	main = mn
+	version_text = ver
 	build()
 	fit_ui()
 	get_viewport().size_changed.connect(fit_ui)
 
-func ui_scale() -> float:
-	var vs := get_viewport().get_visible_rect().size
-	return clampf(minf(vs.x / 720.0, vs.y / 1280.0), 0.72, 1.3)
-
-func fit_ui() -> void:
-	var s := ui_scale()
-	score_label.add_theme_font_size_override("font_size", int(76.0 * s))
-	gain_label.add_theme_font_size_override("font_size", int(34.0 * s))
-	best_label.add_theme_font_size_override("font_size", int(26.0 * s))
-	combo_label.add_theme_font_size_override("font_size", int(26.0 * s))
-	hint_label.add_theme_font_size_override("font_size", int(24.0 * s))
-	mute_button.add_theme_font_size_override("font_size", int(22.0 * s))
-	restart_button.add_theme_font_size_override("font_size", int(22.0 * s))
-	top_box.offset_top = 36.0 * s
-	buttons_row.offset_top = 36.0 * s
-	buttons_row.offset_right = -16.0 * s
-	hint_label.offset_top = -100.0 * s
-	hint_label.offset_bottom = -64.0 * s
-
-func big_label(text: String, size: int, color: Color) -> Label:
+func title_label(text: String, size: int, color: Color) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -47,6 +37,42 @@ func big_label(text: String, size: int, color: Color) -> Label:
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
 
+func ui_scale() -> float:
+	var vs := get_viewport().get_visible_rect().size
+	return clampf(minf(vs.x / 720.0, vs.y / 1280.0), 0.72, 1.3)
+
+func fit_ui() -> void:
+	var s := ui_scale()
+	score_label.add_theme_font_size_override("font_size", int(68.0 * s))
+	gain_label.add_theme_font_size_override("font_size", int(32.0 * s))
+	best_label.add_theme_font_size_override("font_size", int(24.0 * s))
+	combo_label.add_theme_font_size_override("font_size", int(24.0 * s))
+	hint_label.add_theme_font_size_override("font_size", int(22.0 * s))
+	top_box.offset_top = 32.0 * s
+
+func dim_layer() -> ColorRect:
+	var d := ColorRect.new()
+	d.set_anchors_preset(Control.PRESET_FULL_RECT)
+	d.color = Color(0, 0, 0, 0.62)
+	d.visible = false
+	return d
+
+func sheet_card() -> PanelContainer:
+	var p := PanelContainer.new()
+	M3Kit.style_card(p)
+	return p
+
+func sheet_title(text: String) -> Label:
+	return title_label(text, 30, M3Kit.INK)
+
+func sheet_button(text: String) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.add_theme_font_size_override("font_size", 24)
+	b.custom_minimum_size = Vector2(240, 60)
+	M3Kit.style_button(b)
+	return b
+
 func build() -> void:
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -54,77 +80,144 @@ func build() -> void:
 	add_child(root)
 	top_box = VBoxContainer.new()
 	top_box.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	top_box.offset_top = 40
+	top_box.offset_top = 36
 	top_box.offset_bottom = 320
 	top_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	top_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top_box.add_theme_constant_override("separation", 2)
 	root.add_child(top_box)
-	var top: VBoxContainer = top_box
-	score_label = big_label("0", 76, Color.WHITE)
-	top.add_child(score_label)
-	gain_label = big_label("", 34, Color(0.45, 0.85, 1.0))
+	score_label = title_label("0", 68, M3Kit.INK)
+	top_box.add_child(score_label)
+	gain_label = title_label("", 32, M3Kit.ACCENT)
 	gain_label.modulate = Color(1, 1, 1, 0)
-	top.add_child(gain_label)
-	best_label = big_label("BEST 0", 26, Color(0.75, 0.78, 0.9))
-	top.add_child(best_label)
-	combo_label = big_label("", 26, Color(1.0, 0.8, 0.3))
-	top.add_child(combo_label)
-	buttons_row = HBoxContainer.new()
-	buttons_row.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	buttons_row.offset_left = -260
-	buttons_row.offset_top = 40
-	buttons_row.offset_right = -16
-	buttons_row.offset_bottom = 110
-	buttons_row.add_theme_constant_override("separation", 12)
-	root.add_child(buttons_row)
-	var row: HBoxContainer = buttons_row
-	mute_button = Button.new()
-	mute_button.text = "Sound On"
-	mute_button.add_theme_font_size_override("font_size", 22)
-	mute_button.pressed.connect(main.toggle_mute)
-	row.add_child(mute_button)
-	restart_button = Button.new()
-	restart_button.text = "Restart"
-	restart_button.add_theme_font_size_override("font_size", 22)
+	top_box.add_child(gain_label)
+	var best_row := HBoxContainer.new()
+	best_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	best_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	best_row.add_theme_constant_override("separation", 6)
+	top_box.add_child(best_row)
+	best_row.add_child(M3Kit.icon_label("star", 26, M3Kit.GOLD))
+	best_label = title_label("BEST 0", 24, M3Kit.INK_DIM)
+	best_row.add_child(best_label)
+	combo_label = title_label("", 24, M3Kit.GOLD)
+	top_box.add_child(combo_label)
+	var left_box := HBoxContainer.new()
+	left_box.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	left_box.offset_left = 16
+	left_box.offset_top = 36
+	left_box.offset_right = 80
+	left_box.offset_bottom = 100
+	left_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(left_box)
+	settings_button = M3Kit.icon_button("settings", 30)
+	settings_button.pressed.connect(show_settings)
+	left_box.add_child(settings_button)
+	var right_box := HBoxContainer.new()
+	right_box.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	right_box.offset_left = -80
+	right_box.offset_top = 36
+	right_box.offset_right = -16
+	right_box.offset_bottom = 100
+	right_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(right_box)
+	restart_button = M3Kit.icon_button("refresh", 30)
 	restart_button.pressed.connect(main.restart_game)
-	row.add_child(restart_button)
-	hint_label = big_label("Drag blocks onto the board", 24, Color(0.6, 0.64, 0.78))
+	right_box.add_child(restart_button)
+	hint_label = title_label("Drag blocks onto the board", 22, M3Kit.INK_DIM)
 	hint_label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	hint_label.offset_left = 16
 	hint_label.offset_right = -16
-	hint_label.offset_top = -100
+	hint_label.offset_top = -96
 	hint_label.offset_bottom = -64
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(hint_label)
-	over_dim = ColorRect.new()
-	over_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	over_dim.color = Color(0, 0, 0, 0.62)
-	over_dim.visible = false
+	build_settings(root)
+	build_update(root)
+	build_over(root)
+
+func build_settings(root: Control) -> void:
+	settings_dim = dim_layer()
+	root.add_child(settings_dim)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	settings_dim.add_child(center)
+	var card := sheet_card()
+	center.add_child(card)
+	var box := VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 12)
+	card.add_child(box)
+	box.add_child(sheet_title("Settings"))
+	var sound_row := HBoxContainer.new()
+	sound_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	sound_row.add_theme_constant_override("separation", 12)
+	box.add_child(sound_row)
+	sound_row.add_child(M3Kit.icon_label("volume_up", 30, M3Kit.INK))
+	var sound_label := title_label("Sound", 24, M3Kit.INK)
+	sound_row.add_child(sound_label)
+	sound_switch = CheckButton.new()
+	sound_switch.toggled.connect(main.set_sound_enabled)
+	sound_row.add_child(sound_switch)
+	var update_button := sheet_button("Check for updates")
+	update_button.pressed.connect(main.check_updates)
+	box.add_child(update_button)
+	settings_version = title_label(version_text, 18, M3Kit.INK_DIM)
+	box.add_child(settings_version)
+	var close_button := Button.new()
+	close_button.text = "Close"
+	close_button.add_theme_font_size_override("font_size", 24)
+	M3Kit.style_text_button(close_button)
+	close_button.pressed.connect(hide_settings)
+	box.add_child(close_button)
+
+func build_update(root: Control) -> void:
+	update_dim = dim_layer()
+	root.add_child(update_dim)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	update_dim.add_child(center)
+	var card := sheet_card()
+	center.add_child(card)
+	var box := VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 12)
+	card.add_child(box)
+	update_title = sheet_title("Update")
+	box.add_child(update_title)
+	update_body = title_label("", 22, M3Kit.INK_DIM)
+	update_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	update_body.custom_minimum_size = Vector2(420, 0)
+	box.add_child(update_body)
+	update_go = sheet_button("Download")
+	update_go.pressed.connect(_on_update_go)
+	box.add_child(update_go)
+	var later := Button.new()
+	later.text = "Later"
+	later.add_theme_font_size_override("font_size", 24)
+	M3Kit.style_text_button(later)
+	later.pressed.connect(hide_update)
+	box.add_child(later)
+
+func build_over(root: Control) -> void:
+	over_dim = dim_layer()
 	root.add_child(over_dim)
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	over_dim.add_child(center)
-	var panel := PanelContainer.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.05, 0.06, 0.12, 0.97)
-	sb.set_corner_radius_all(24)
-	sb.set_content_margin_all(36)
-	panel.add_theme_stylebox_override("panel", sb)
+	var panel := sheet_card()
 	center.add_child(panel)
 	var box := VBoxContainer.new()
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_theme_constant_override("separation", 14)
 	panel.add_child(box)
-	var title := big_label("GAME OVER", 52, Color.WHITE)
-	box.add_child(title)
-	over_score = big_label("", 30, Color(0.8, 0.83, 0.95))
+	box.add_child(M3Kit.icon_label("trophy", 64, M3Kit.GOLD))
+	box.add_child(sheet_title("GAME OVER"))
+	over_score = title_label("", 28, M3Kit.INK_DIM)
 	box.add_child(over_score)
-	var again := Button.new()
-	again.text = "Play Again"
-	again.custom_minimum_size = Vector2(260, 72)
-	again.add_theme_font_size_override("font_size", 30)
+	var again := sheet_button("Play Again")
 	again.pressed.connect(main.restart_game)
 	box.add_child(again)
 
@@ -150,7 +243,28 @@ func hide_over() -> void:
 	over_dim.visible = false
 
 func set_muted(m: bool) -> void:
-	if m:
-		mute_button.text = "Muted"
-	else:
-		mute_button.text = "Sound On"
+	sound_switch.set_pressed_no_signal(not m)
+
+func show_settings() -> void:
+	settings_version.text = version_text
+	settings_dim.visible = true
+
+func hide_settings() -> void:
+	settings_dim.visible = false
+
+func show_update_dialog(title: String, body: String, apk_url: String) -> void:
+	update_title.text = title
+	update_body.text = body
+	pending_apk = apk_url
+	update_go.visible = apk_url != ""
+	update_dim.visible = true
+
+func hide_update() -> void:
+	pending_apk = ""
+	update_dim.visible = false
+
+func _on_update_go() -> void:
+	if pending_apk != "":
+		OS.shell_open(pending_apk)
+		pending_apk = ""
+	update_dim.visible = false

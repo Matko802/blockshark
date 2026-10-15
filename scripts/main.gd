@@ -1,33 +1,50 @@
 extends Node3D
 
-const TRAY_Z = 6.6
+const TRAY_Z = 6.3
 const TRAY_X = [-2.9, 0.0, 2.9]
-const TRAY_SCALE = 0.62
+const TRAY_SCALE = 0.5
 const TRAY_Y = 0.15
 
 var state: GameState
 var tray_nodes: Array = []
 var time := 0.0
+var app_version := "2.1.0"
+var app_code := 0
 
 @onready var board: BoardView = $Board
 @onready var drag = $Drag
 @onready var sound: SharkSound = $Sound
 @onready var hud = $HUD
+@onready var updater = $Updater
 @onready var camera: Camera3D = $Camera3D
 @onready var tray_root: Node3D = $Tray
 
+func load_version() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load("res://version.cfg") == OK:
+		app_version = str(cfg.get_value("app", "version_name", app_version))
+		app_code = int(cfg.get_value("app", "version_code", 0))
+
+func version_text() -> String:
+	if app_code > 0:
+		return "v" + app_version + "  build " + str(app_code)
+	return "v" + app_version
+
 func _ready() -> void:
+	load_version()
 	state = GameState.new()
 	sound.muted = state.muted
 	camera.position = Vector3(0, 12.5, 9.5)
-	camera.look_at(Vector3(0, 0, 1.2))
+	camera.look_at(Vector3(0, 0, 1.5))
 	fit_camera()
 	get_viewport().size_changed.connect(fit_camera)
 	drag.setup(camera, board, state, self)
-	hud.setup(self)
+	hud.setup(self, version_text())
+	updater.setup(self, hud, app_version)
 	rebuild_tray()
 	hud.refresh(state.score, state.best, state.combo)
 	hud.set_muted(state.muted)
+	updater.auto_check()
 
 func _process(delta: float) -> void:
 	time += delta
@@ -42,7 +59,7 @@ func _process(delta: float) -> void:
 func fit_camera() -> void:
 	var vs := get_viewport().get_visible_rect().size
 	var aspect := vs.x / maxf(vs.y, 1.0)
-	camera.size = maxf(9.6, 12.5 * aspect)
+	camera.size = maxf(10.4, 14.0 * aspect)
 
 func slot_pos(i: int) -> Vector3:
 	return Vector3(TRAY_X[i], TRAY_Y, TRAY_Z)
@@ -188,8 +205,11 @@ func restart_game() -> void:
 	hud.refresh(state.score, state.best, state.combo)
 	sound.select()
 
-func toggle_mute() -> void:
-	state.muted = not state.muted
+func set_sound_enabled(sound_on: bool) -> void:
+	state.muted = not sound_on
 	sound.muted = state.muted
 	state.save_data()
 	hud.set_muted(state.muted)
+
+func check_updates() -> void:
+	updater.check(false)
