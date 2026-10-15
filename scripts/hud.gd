@@ -19,7 +19,6 @@ var update_dim: ColorRect
 var update_title: Label
 var update_body: Label
 var update_go: Button
-var pending_apk := ""
 
 func setup(mn, ver: String) -> void:
 	main = mn
@@ -252,19 +251,15 @@ func show_settings() -> void:
 func hide_settings() -> void:
 	settings_dim.visible = false
 
-func show_update_dialog(title: String, body: String, apk_url: String) -> void:
+func show_update_dialog(title: String, body: String, primary_text: String, show_primary: bool) -> void:
 	update_title.text = title
 	update_body.text = body
-	pending_apk = apk_url
-	update_go.visible = apk_url != ""
+	update_go.text = primary_text
+	update_go.visible = show_primary
 	update_dim.visible = true
 
 func hide_update() -> void:
-	pending_apk = ""
 	update_dim.visible = false
 
 func _on_update_go() -> void:
-	if pending_apk != "":
-		OS.shell_open(pending_apk)
-		pending_apk = ""
-	update_dim.visible = false
+	main.updater.on_primary()

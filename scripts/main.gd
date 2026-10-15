@@ -10,7 +10,7 @@ var tray_nodes: Array = []
 var tray_x: Dictionary = {}
 var tray_tweens: Dictionary = {}
 var time := 0.0
-var app_version := "2.3.5"
+var app_version := "2.4.0"
 var app_code := 0
 
 @onready var board: BoardView = $Board
@@ -31,6 +31,10 @@ func version_text() -> String:
 	if app_code > 0:
 		return "v" + app_version + "  build " + str(app_code)
 	return "v" + app_version
+
+func buzz(ms: int) -> void:
+	if OS.has_feature("android") or OS.has_feature("ios"):
+		Input.vibrate_handheld(ms)
 
 func _ready() -> void:
 	load_version()
@@ -151,6 +155,7 @@ func on_pickup(idx: int) -> void:
 	tray_tweens.erase(idx)
 	node.scale = Vector3.ONE
 	sound.select()
+	buzz(15)
 
 func ghost_cells(idx: int, anchor: Vector2i) -> Array:
 	var piece: Dictionary = state.tray[idx]
@@ -187,6 +192,7 @@ func on_drop(idx: int, anchor: Vector2i) -> void:
 	var res: Dictionary = state.place(idx, anchor.y, anchor.x)
 	if not bool(res["ok"]):
 		sound.invalid()
+		buzz(60)
 		back_to_slot(idx)
 		return
 	var node := tray_node(idx)
@@ -200,8 +206,13 @@ func on_drop(idx: int, anchor: Vector2i) -> void:
 	if lines > 0:
 		board.pop_cells(cleared)
 		sound.cleared(lines)
+		if lines > 1:
+			buzz(90)
+		else:
+			buzz(50)
 	else:
 		sound.place()
+		buzz(30)
 	hud.show_gain(int(res["gained"]))
 	if state.remaining().size() == 3:
 		rebuild_tray()
@@ -211,6 +222,7 @@ func on_drop(idx: int, anchor: Vector2i) -> void:
 	hud.refresh(state.score, state.best, state.combo)
 	if state.game_over:
 		sound.over()
+		buzz(150)
 		hud.show_over(state.score, state.best)
 
 func back_to_slot(idx: int) -> void:

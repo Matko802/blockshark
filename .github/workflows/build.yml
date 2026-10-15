@@ -55,7 +55,12 @@ jobs:
           curl -sL "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v4.5-stable_export_templates.tpz" -o /tmp/templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/4.5.stable
           unzip -o -j /tmp/templates.tpz "templates/android_debug.apk" "templates/android_release.apk" "templates/version.txt" -d ~/.local/share/godot/export_templates/4.5.stable/
-          rm /tmp/templates.tpz
+          unzip -o -j /tmp/templates.tpz "templates/android_source.zip" -d /tmp/tplsrc
+          mkdir -p android/build
+          unzip -o -q /tmp/tplsrc/templates/android_source.zip -d android/build
+          printf '4.5.stable\n' > android/.build_version
+          touch android/build/.gdignore
+          rm -rf /tmp/templates.tpz /tmp/tplsrc
       - name: Configure Godot editor settings and keystores
         run: |
           mkdir -p ~/.config/godot
@@ -65,7 +70,7 @@ jobs:
       - name: Stamp version
         run: |
           TAG="${GITHUB_REF_NAME}"
-          if [[ "$TAG" == v* ]]; then NAME="${TAG#v}"; else NAME="2.3.5-dev.${GITHUB_RUN_NUMBER}"; fi
+          if [[ "$TAG" == v* ]]; then NAME="${TAG#v}"; else NAME="2.4.0-dev.${GITHUB_RUN_NUMBER}"; fi
           printf '[app]\nversion_name="%s"\nversion_code=%s\n' "$NAME" "$GITHUB_RUN_NUMBER" > version.cfg
           sed -i "s/^version\/name=.*/version\/name=\"$NAME\"/" export_presets.cfg
           sed -i "s/^version\/code=.*/version\/code=$GITHUB_RUN_NUMBER/" export_presets.cfg
