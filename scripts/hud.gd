@@ -5,6 +5,10 @@ var score_label: Label
 var best_label: Label
 var combo_label: Label
 var gain_label: Label
+var hint_label: Label
+var top_box: VBoxContainer
+var buttons_row: HBoxContainer
+var restart_button: Button
 var over_dim: ColorRect
 var over_score: Label
 var mute_button: Button
@@ -12,6 +16,27 @@ var mute_button: Button
 func setup(mn) -> void:
 	main = mn
 	build()
+	fit_ui()
+	get_viewport().size_changed.connect(fit_ui)
+
+func ui_scale() -> float:
+	var vs := get_viewport().get_visible_rect().size
+	return clampf(minf(vs.x / 720.0, vs.y / 1280.0), 0.72, 1.3)
+
+func fit_ui() -> void:
+	var s := ui_scale()
+	score_label.add_theme_font_size_override("font_size", int(76.0 * s))
+	gain_label.add_theme_font_size_override("font_size", int(34.0 * s))
+	best_label.add_theme_font_size_override("font_size", int(26.0 * s))
+	combo_label.add_theme_font_size_override("font_size", int(26.0 * s))
+	hint_label.add_theme_font_size_override("font_size", int(24.0 * s))
+	mute_button.add_theme_font_size_override("font_size", int(22.0 * s))
+	restart_button.add_theme_font_size_override("font_size", int(22.0 * s))
+	top_box.offset_top = 36.0 * s
+	buttons_row.offset_top = 36.0 * s
+	buttons_row.offset_right = -16.0 * s
+	hint_label.offset_top = -100.0 * s
+	hint_label.offset_bottom = -64.0 * s
 
 func big_label(text: String, size: int, color: Color) -> Label:
 	var l := Label.new()
@@ -27,14 +52,15 @@ func build() -> void:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
-	var top := VBoxContainer.new()
-	top.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	top.offset_top = 40
-	top.offset_bottom = 300
-	top.alignment = BoxContainer.ALIGNMENT_CENTER
-	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top.add_theme_constant_override("separation", 2)
-	root.add_child(top)
+	top_box = VBoxContainer.new()
+	top_box.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	top_box.offset_top = 40
+	top_box.offset_bottom = 320
+	top_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	top_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top_box.add_theme_constant_override("separation", 2)
+	root.add_child(top_box)
+	var top: VBoxContainer = top_box
 	score_label = big_label("0", 76, Color.WHITE)
 	top.add_child(score_label)
 	gain_label = big_label("", 34, Color(0.45, 0.85, 1.0))
@@ -44,31 +70,33 @@ func build() -> void:
 	top.add_child(best_label)
 	combo_label = big_label("", 26, Color(1.0, 0.8, 0.3))
 	top.add_child(combo_label)
-	var row := HBoxContainer.new()
-	row.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	row.offset_left = -270
-	row.offset_top = 40
-	row.offset_right = -16
-	row.offset_bottom = 110
-	row.add_theme_constant_override("separation", 12)
-	root.add_child(row)
+	buttons_row = HBoxContainer.new()
+	buttons_row.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	buttons_row.offset_left = -260
+	buttons_row.offset_top = 40
+	buttons_row.offset_right = -16
+	buttons_row.offset_bottom = 110
+	buttons_row.add_theme_constant_override("separation", 12)
+	root.add_child(buttons_row)
+	var row: HBoxContainer = buttons_row
 	mute_button = Button.new()
 	mute_button.text = "Sound On"
-	mute_button.add_theme_font_size_override("font_size", 24)
+	mute_button.add_theme_font_size_override("font_size", 22)
 	mute_button.pressed.connect(main.toggle_mute)
 	row.add_child(mute_button)
-	var restart_button := Button.new()
+	restart_button = Button.new()
 	restart_button.text = "Restart"
-	restart_button.add_theme_font_size_override("font_size", 24)
+	restart_button.add_theme_font_size_override("font_size", 22)
 	restart_button.pressed.connect(main.restart_game)
 	row.add_child(restart_button)
-	var hint := big_label("Drag blocks onto the board", 24, Color(0.6, 0.64, 0.78))
-	hint.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	hint.offset_left = -350
-	hint.offset_right = 350
-	hint.offset_top = -100
-	hint.offset_bottom = -64
-	root.add_child(hint)
+	hint_label = big_label("Drag blocks onto the board", 24, Color(0.6, 0.64, 0.78))
+	hint_label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	hint_label.offset_left = 16
+	hint_label.offset_right = -16
+	hint_label.offset_top = -100
+	hint_label.offset_bottom = -64
+	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	root.add_child(hint_label)
 	over_dim = ColorRect.new()
 	over_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	over_dim.color = Color(0, 0, 0, 0.62)

@@ -21,6 +21,8 @@ func _ready() -> void:
 	sound.muted = state.muted
 	camera.position = Vector3(0, 12.5, 9.5)
 	camera.look_at(Vector3(0, 0, 1.2))
+	fit_camera()
+	get_viewport().size_changed.connect(fit_camera)
 	drag.setup(camera, board, state, self)
 	hud.setup(self)
 	rebuild_tray()
@@ -36,6 +38,11 @@ func _process(delta: float) -> void:
 		if drag.dragging == i:
 			continue
 		n.position.y = TRAY_Y + sin(time * 2.2 + float(i) * 1.3) * 0.07
+
+func fit_camera() -> void:
+	var vs := get_viewport().get_visible_rect().size
+	var aspect := vs.x / maxf(vs.y, 1.0)
+	camera.size = maxf(9.6, 12.5 * aspect)
 
 func slot_pos(i: int) -> Vector3:
 	return Vector3(TRAY_X[i], TRAY_Y, TRAY_Z)
