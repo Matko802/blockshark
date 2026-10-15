@@ -7,8 +7,10 @@ const TRAY_Y = 0.15
 
 var state: GameState
 var tray_nodes: Array = []
+var tray_x: Dictionary = {}
+var tray_tweens: Dictionary = {}
 var time := 0.0
-var app_version := "2.3.3"
+var app_version := "2.3.4"
 var app_code := 0
 
 @onready var board: BoardView = $Board
@@ -62,13 +64,41 @@ func fit_camera() -> void:
 	camera.size = maxf(9.0, 12.0 * aspect)
 
 func slot_pos(i: int) -> Vector3:
-	return Vector3(TRAY_X[i], TRAY_Y, TRAY_Z)
+	return Vector3(float(tray_x.get(i, TRAY_X[i])), TRAY_Y, TRAY_Z)
+
+func remaining_indices() -> Array:
+	var out: Array = []
+	for i in state.tray.size():
+		if not bool((state.tray[i] as Dictionary)["used"]):
+			out.append(i)
+	return out
+
+func layout_tray(animated: bool) -> void:
+	var ids := remaining_indices()
+	var n := ids.size()
+	for k in n:
+		var idx: int = ids[k]
+		tray_x[idx] = (float(k) - float(n - 1) * 0.5) * 2.9
+		var node := tray_node(idx)
+		if node == null:
+			continue
+		if tray_tweens.has(idx) and is_instance_valid(tray_tweens[idx]):
+			(tray_tweens[idx] as Tween).kill()
+		tray_tweens.erase(idx)
+		if animated:
+			var slide := create_tween()
+			slide.tween_property(node, "position", slot_pos(idx), 0.25).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+			tray_tweens[idx] = slide
+		else:
+			node.position = slot_pos(idx)
 
 func rebuild_tray() -> void:
 	for n in tray_nodes:
 		if n != null and is_instance_valid(n):
 			(n as Node).queue_free()
 	tray_nodes.clear()
+	tray_x.clear()
+	tray_tweens.clear()
 	for i in state.tray.size():
 		var piece: Dictionary = state.tray[i]
 		var node: Node3D = PieceFactory.build(piece["shape"], int(piece["color"]), true, true)
@@ -81,6 +111,7 @@ func rebuild_tray() -> void:
 		var target := Vector3.ONE * TRAY_SCALE
 		var tw := create_tween()
 		tw.tween_property(node, "scale", target, 0.25).set_delay(float(i) * 0.07).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	layout_tray(false)
 	update_tray_dim()
 
 func tray_node(idx: int) -> Node3D:
@@ -115,6 +146,9 @@ func on_pickup(idx: int) -> void:
 	var node := tray_node(idx)
 	if node == null:
 		return
+	if tray_tweens.has(idx) and is_instance_valid(tray_tweens[idx]):
+		(tray_tweens[idx] as Tween).kill()
+	tray_tweens.erase(idx)
 	node.scale = Vector3.ONE
 	sound.select()
 
@@ -134,10 +168,12 @@ func ghost_valid(cells: Array) -> bool:
 			return false
 	return true
 
-func on_drag_preview(idx: int, anchor: Vector2i) -> void:
+func on_drag_preview(idx: int, anchor: Vector2i) -> bool:
 	var cells := ghost_cells(idx, anchor)
 	var piece: Dictionary = state.tray[idx]
-	board.show_ghost(cells, ghost_valid(cells), int(piece["color"]))
+	var ok := ghost_valid(cells)
+	board.show_ghost(cells, ok, int(piece["color"]))
+	return ok
 
 func on_drop(idx: int, anchor: Vector2i) -> void:
 	board.hide_ghost()
@@ -170,6 +206,7 @@ func on_drop(idx: int, anchor: Vector2i) -> void:
 	if state.remaining().size() == 3:
 		rebuild_tray()
 	else:
+		layout_tray(true)
 		update_tray_dim()
 	hud.refresh(state.score, state.best, state.combo)
 	if state.game_over:

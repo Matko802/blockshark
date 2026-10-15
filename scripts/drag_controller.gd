@@ -6,8 +6,9 @@ var state: GameState
 var main
 var dragging := -1
 var drag_node: Node3D
-var pointer_start := Vector3.ZERO
+var drag_accum := Vector3.ZERO
 var last_pointer := Vector3.ZERO
+var last_valid := false
 var has_pointer := false
 var lift_dir := Vector3(0, 0, -1)
 var lift_blend := 0.0
@@ -31,9 +32,14 @@ func _process(delta: float) -> void:
 	var shape: Dictionary = piece["shape"]
 	var w: int = shape["w"]
 	var h: int = shape["h"]
-	var shift := last_pointer - pointer_start
 	var lift := lift_dir * (LIFT_CELLS * lift_taper() * lift_blend)
-	drag_node.position = Vector3(HOME.x + shift.x - w * 0.5 + lift.x, DRAG_Y, HOME.z + shift.z - h * 0.5 + lift.z)
+	drag_node.position = Vector3(HOME.x + drag_accum.x - w * 0.5 + lift.x, DRAG_Y, HOME.z + drag_accum.z - h * 0.5 + lift.z)
+
+func current_gain() -> float:
+	var base := clampf(camera.size / 9.0, 0.6, 1.6)
+	if last_valid:
+		return base * 0.65
+	return base
 
 func lift_taper() -> float:
 	return clampf((last_pointer.z + 4.0) / TAPER_BAND, 0.0, 1.0)
@@ -109,15 +115,15 @@ func begin_drag(screen_pos: Vector2) -> void:
 	main.on_pickup(idx)
 	lift_dir = compute_lift_dir()
 	lift_blend = 0.0
-	pointer_start = pt0
+	drag_accum = Vector3.ZERO
 	last_pointer = pt0
+	last_valid = false
 	has_pointer = true
 	move_drag(screen_pos)
 
 func target_center() -> Vector3:
-	var shift := last_pointer - pointer_start
 	var lift := lift_dir * (LIFT_CELLS * lift_taper())
-	return Vector3(HOME.x + shift.x + lift.x, DRAG_Y, HOME.z + shift.z + lift.z)
+	return Vector3(HOME.x + drag_accum.x + lift.x, DRAG_Y, HOME.z + drag_accum.z + lift.z)
 
 func target_anchor() -> Vector2i:
 	var piece: Dictionary = state.tray[dragging]
@@ -134,8 +140,10 @@ func move_drag(screen_pos: Vector2) -> void:
 	if p == null:
 		return
 	var pt: Vector3 = p
+	var step := pt - last_pointer
 	last_pointer = pt
-	main.on_drag_preview(dragging, target_anchor())
+	drag_accum += Vector3(step.x, 0.0, step.z) * current_gain()
+	last_valid = bool(main.on_drag_preview(dragging, target_anchor()))
 
 func end_drag(screen_pos: Vector2) -> void:
 	if dragging < 0:
