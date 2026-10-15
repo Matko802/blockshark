@@ -57,7 +57,7 @@ jobs:
           unzip -o -j /tmp/templates.tpz "templates/android_debug.apk" "templates/android_release.apk" "templates/version.txt" -d ~/.local/share/godot/export_templates/4.5.stable/
           unzip -o -j /tmp/templates.tpz "templates/android_source.zip" -d /tmp/tplsrc
           mkdir -p android/build
-          unzip -o -q /tmp/tplsrc/templates/android_source.zip -d android/build
+          unzip -o -q /tmp/tplsrc/android_source.zip -d android/build
           printf '4.5.stable\n' > android/.build_version
           touch android/build/.gdignore
           rm -rf /tmp/templates.tpz /tmp/tplsrc
