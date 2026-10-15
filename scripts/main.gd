@@ -59,7 +59,7 @@ func _process(delta: float) -> void:
 func fit_camera() -> void:
 	var vs := get_viewport().get_visible_rect().size
 	var aspect := vs.x / maxf(vs.y, 1.0)
-	camera.size = maxf(11.8, 15.8 * aspect)
+	camera.size = maxf(12.6, 16.5 * aspect)
 
 func slot_pos(i: int) -> Vector3:
 	return Vector3(TRAY_X[i], TRAY_Y, TRAY_Z)
