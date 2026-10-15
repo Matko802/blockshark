@@ -1,6 +1,9 @@
 extends RefCounted
 class_name Mats
 
+const STONE: Texture2D = preload("res://assets/textures/stone.png")
+const BEDROCK: Texture2D = preload("res://assets/textures/bedrock.png")
+
 const COLORS = [
 	Color(0.94, 0.27, 0.27),
 	Color(0.98, 0.45, 0.09),
@@ -31,6 +34,8 @@ static func for_color(i: int) -> StandardMaterial3D:
 	if _mats[i] == null:
 		var m := StandardMaterial3D.new()
 		m.albedo_color = COLORS[i % COLORS.size()]
+		m.albedo_texture = STONE
+		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 		m.roughness = 0.35
 		m.metallic = 0.05
 		_mats[i] = m
@@ -52,6 +57,8 @@ static func ghost_color(i: int) -> StandardMaterial3D:
 static func unique_color(i: int) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.albedo_color = COLORS[i % COLORS.size()]
+	m.albedo_texture = STONE
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	m.roughness = 0.35
 	m.metallic = 0.05
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -67,7 +74,9 @@ static func empty() -> StandardMaterial3D:
 static func base() -> StandardMaterial3D:
 	if _base_mat == null:
 		_base_mat = StandardMaterial3D.new()
-		_base_mat.albedo_color = Color(0.08, 0.10, 0.22)
+		_base_mat.albedo_color = Color(0.55, 0.58, 0.72)
+		_base_mat.albedo_texture = BEDROCK
+		_base_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 		_base_mat.roughness = 0.9
 	return _base_mat
 
