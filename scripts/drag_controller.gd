@@ -132,13 +132,17 @@ func target_center() -> Vector3:
 	var lift := lift_full * lift_taper()
 	return Vector3(spawn_center.x + drag_accum.x + lift.x, DRAG_Y, spawn_center.z + drag_accum.z + lift.z)
 
+func snap_anchor(center: Vector3, w: int, h: int) -> Vector2i:
+	var col := clampi(roundi(center.x + 4.0 - w * 0.5), 0, 8 - w)
+	var row := clampi(roundi(center.z + 4.0 - h * 0.5), 0, 8 - h)
+	return Vector2i(col, row)
+
 func target_anchor() -> Vector2i:
 	var piece: Dictionary = state.tray[dragging]
 	var shape: Dictionary = piece["shape"]
 	var w: int = shape["w"]
 	var h: int = shape["h"]
-	var c := target_center()
-	return Vector2i(roundi(c.x + 4.0 - w * 0.5), roundi(c.z + 4.0 - h * 0.5))
+	return snap_anchor(target_center(), w, h)
 
 func move_drag(screen_pos: Vector2) -> void:
 	if dragging < 0 or drag_node == null:
@@ -163,7 +167,7 @@ func end_drag(screen_pos: Vector2) -> void:
 		var w: int = shape["w"]
 		var h: int = shape["h"]
 		var vc := drag_node.position + Vector3(w * 0.5, 0.0, h * 0.5)
-		anchor = Vector2i(roundi(vc.x + 4.0 - w * 0.5), roundi(vc.z + 4.0 - h * 0.5))
+		anchor = snap_anchor(vc, w, h)
 	dragging = -1
 	drag_node = null
 	has_pointer = false

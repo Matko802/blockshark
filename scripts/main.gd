@@ -36,6 +36,11 @@ func buzz(ms: int) -> void:
 	if OS.has_feature("android") or OS.has_feature("ios"):
 		Input.vibrate_handheld(ms)
 
+func buzz_twice(a: int, gap: float, b: int) -> void:
+	buzz(a)
+	await get_tree().create_timer(gap).timeout
+	buzz(b)
+
 func _ready() -> void:
 	load_version()
 	state = GameState.new()
@@ -207,12 +212,12 @@ func on_drop(idx: int, anchor: Vector2i) -> void:
 		board.pop_cells(cleared)
 		sound.cleared(lines)
 		if lines > 1:
-			buzz(90)
+			buzz_twice(50, 0.07, 70)
 		else:
-			buzz(50)
+			buzz(40)
 	else:
 		sound.place()
-		buzz(30)
+		buzz(25)
 	hud.show_gain(int(res["gained"]))
 	if state.remaining().size() == 3:
 		rebuild_tray()
@@ -244,6 +249,7 @@ func restart_game() -> void:
 	hud.hide_over()
 	hud.refresh(state.score, state.best, state.combo)
 	sound.select()
+	buzz(20)
 
 func set_sound_enabled(sound_on: bool) -> void:
 	state.muted = not sound_on
