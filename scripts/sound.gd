@@ -78,23 +78,31 @@ func play_stream(s: AudioStreamWAV) -> void:
 	pl.stream = s
 	pl.play()
 
+func chime(freq: float, vol: float) -> PackedByteArray:
+	var out := seg_click(freq, 0.04, vol)
+	out.append_array(seg_tone(freq, 0.14, vol))
+	return out
+
 func select() -> void:
 	play_stream(stream_of([seg_click(2600.0, 0.035, 0.5)]))
 
 func place() -> void:
 	play_stream(stream_of([seg_thock(rng.randf_range(200.0, 240.0), 0.09, 0.65)]))
+	play_stream(stream_of([seg_click(3200.0, 0.025, 0.4)]))
+
+func tray() -> void:
+	play_stream(stream_of([seg_click(1800.0, 0.04, 0.4), seg_silence(0.03), seg_click(2400.0, 0.04, 0.4)]))
 
 func cleared(lines: int) -> void:
+	var ladder := [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5]
 	var parts: Array = []
-	var n := mini(lines + 1, 4)
+	var n := mini(lines + 1, 5)
 	for i in n:
-		parts.append(seg_click(1400.0 + float(i) * 350.0, 0.055, 0.6))
-		parts.append(seg_silence(0.015))
-	parts.append(seg_tone(880.0, 0.09, 0.45))
+		parts.append(chime(float(ladder[i]), 0.55))
 	play_stream(stream_of(parts))
 
 func invalid() -> void:
 	play_stream(stream_of([seg_thock(110.0, 0.14, 0.6)]))
 
 func over() -> void:
-	play_stream(stream_of([seg_tone(392.0, 0.16, 0.6), seg_tone(311.0, 0.16, 0.6), seg_tone(233.0, 0.2, 0.6)]))
+	play_stream(stream_of([seg_tone(523.25, 0.15, 0.55), seg_tone(440.0, 0.15, 0.55), seg_tone(349.23, 0.15, 0.55), seg_tone(293.66, 0.2, 0.55)]))

@@ -10,7 +10,7 @@ var tray_nodes: Array = []
 var tray_x: Dictionary = {}
 var tray_tweens: Dictionary = {}
 var time := 0.0
-var app_version := "2.4.2"
+var app_version := "2.4.3"
 var app_code := 0
 
 @onready var board: BoardView = $Board
@@ -53,7 +53,10 @@ func update_sky() -> void:
 	var mat := world_env.environment.sky.sky_material as ProceduralSkyMaterial
 	if mat != null:
 		mat.sky_top_color = (a[1] as Color).lerp(b[1] as Color, t)
-		mat.sky_horizon_color = (a[2] as Color).lerp(b[2] as Color, t)
+		var hor := (a[2] as Color).lerp(b[2] as Color, t)
+		mat.sky_horizon_color = hor
+		mat.ground_horizon_color = Color(hor.r * 0.45, hor.g * 0.45, hor.b * 0.45)
+		mat.ground_bottom_color = Color(hor.r * 0.15, hor.g * 0.15, hor.b * 0.15)
 	sun.light_color = (a[3] as Color).lerp(b[3] as Color, t)
 	sun.light_energy = lerpf(float(a[4]), float(b[4]), t)
 	world_env.environment.ambient_light_energy = lerpf(float(a[5]), float(b[5]), t)
@@ -239,8 +242,6 @@ func on_drop(idx: int, anchor: Vector2i) -> void:
 	var color: int = int(piece["color"])
 	var res: Dictionary = state.place(idx, anchor.y, anchor.x)
 	if not bool(res["ok"]):
-		sound.invalid()
-		buzz(60)
 		back_to_slot(idx)
 		return
 	var node := tray_node(idx)
@@ -264,6 +265,7 @@ func on_drop(idx: int, anchor: Vector2i) -> void:
 	hud.show_gain(int(res["gained"]))
 	if state.remaining().size() == 3:
 		rebuild_tray()
+		sound.tray()
 	else:
 		layout_tray(true)
 		update_tray_dim()
@@ -291,7 +293,7 @@ func restart_game() -> void:
 	rebuild_tray()
 	hud.hide_over()
 	hud.refresh(state.score, state.best, state.combo)
-	sound.select()
+	sound.tray()
 	buzz(20)
 
 func set_sound_enabled(sound_on: bool) -> void:
