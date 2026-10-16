@@ -18,6 +18,9 @@ var update_dim: ColorRect
 var update_title: Label
 var update_body: Label
 var update_go: Button
+var debug_touch := false
+var debug_label: Label
+var debug_switch: CheckButton
 
 func setup(mn, ver: String) -> void:
 	main = mn
@@ -110,6 +113,15 @@ func build() -> void:
 	settings_button = M3Kit.icon_button("settings", 34)
 	settings_button.pressed.connect(show_settings)
 	left_box.add_child(settings_button)
+	debug_label = title_label("", 18, M3Kit.INK_DIM)
+	debug_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	debug_label.offset_left = -420
+	debug_label.offset_right = -16
+	debug_label.offset_top = 112
+	debug_label.offset_bottom = 140
+	debug_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	debug_label.visible = false
+	root.add_child(debug_label)
 	hint_label = title_label("Drag blocks onto the board", 22, M3Kit.INK_DIM)
 	hint_label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	hint_label.offset_left = 16
@@ -124,6 +136,7 @@ func build() -> void:
 
 func build_settings(root: Control) -> void:
 	settings_dim = dim_layer()
+	settings_dim.gui_input.connect(_on_dim_pressed.bind(settings_dim))
 	root.add_child(settings_dim)
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -153,6 +166,16 @@ func build_settings(root: Control) -> void:
 	var update_button := sheet_button("Check for updates")
 	update_button.pressed.connect(_on_check_pressed)
 	box.add_child(update_button)
+	var debug_row := HBoxContainer.new()
+	debug_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	debug_row.add_theme_constant_override("separation", 12)
+	box.add_child(debug_row)
+	debug_row.add_child(M3Kit.icon_label("info", 30, M3Kit.INK))
+	var debug_name := title_label("Touch debug", 24, M3Kit.INK)
+	debug_row.add_child(debug_name)
+	debug_switch = CheckButton.new()
+	debug_switch.toggled.connect(_on_debug_toggled)
+	debug_row.add_child(debug_switch)
 	settings_version = title_label(version_text, 20, M3Kit.INK_DIM)
 	box.add_child(settings_version)
 	var close_button := Button.new()
@@ -171,8 +194,32 @@ func _on_check_pressed() -> void:
 	main.sound.ui()
 	main.check_updates()
 
+func _on_debug_toggled(on: bool) -> void:
+	debug_touch = on
+	debug_label.visible = on
+	if not on:
+		debug_label.text = ""
+
+func _on_dim_pressed(event: InputEvent, dim: ColorRect) -> void:
+	var tapped := false
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		tapped = true
+	if event is InputEventScreenTouch and event.pressed:
+		tapped = true
+	if tapped:
+		dim.visible = false
+
+func _input(event: InputEvent) -> void:
+	if not debug_touch:
+		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		debug_label.text = "tap " + str(Vector2i(event.position))
+	elif event is InputEventScreenTouch and event.pressed:
+		debug_label.text = "touch " + str(Vector2i(event.position))
+
 func build_update(root: Control) -> void:
 	update_dim = dim_layer()
+	update_dim.gui_input.connect(_on_dim_pressed.bind(update_dim))
 	root.add_child(update_dim)
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
