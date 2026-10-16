@@ -7,7 +7,12 @@ func fail(msg: String) -> void:
 func make_piece(cells: Array, w: int, h: int, color: int) -> Dictionary:
 	return {"id": 1, "shape": {"w": w, "h": h, "cells": cells}, "color": color, "used": false}
 
+func _on_watchdog() -> void:
+	print("FAIL watchdog timeout")
+	quit(2)
+
 func _init() -> void:
+	create_timer(120.0).timeout.connect(_on_watchdog)
 	var st := GameState.new()
 	if st.board.size() != 8 or (st.board[0] as Array).size() != 8:
 		fail("board size")

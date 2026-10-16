@@ -19,7 +19,12 @@ func find_fit(state: GameState, shape: Dictionary):
 func ghost_center_world(anchor: Vector2i, w: int, h: int) -> Vector3:
 	return Vector3(anchor.x - 3.5 + float(w - 1) * 0.5, 3.5 - anchor.y - float(h - 1) * 0.5, 1.5)
 
+func _on_watchdog() -> void:
+	print("FAIL watchdog timeout")
+	quit(2)
+
 func _init() -> void:
+	create_timer(120.0).timeout.connect(_on_watchdog)
 	var packed := load("res://scenes/main.tscn") as PackedScene
 	var game := packed.instantiate()
 	root.add_child(game)
@@ -48,16 +53,17 @@ func _init() -> void:
 		var pointer: Vector2 = cam.unproject_position(node.position)
 		drag.begin_drag(pointer)
 		check(drag.dragging == idx, "pickup round " + str(round_i))
-		var want := Vector3(spot.x - 3.5 + float(w - 1) * 0.5, 3.5 - spot.y - float(h - 1) * 0.5, 1.5)
+		drag.lift_blend = 1.0
 		for i in 14:
-			var anchor: Vector2i = drag.target_anchor()
+			var anchor: Vector2i = drag.node_anchor()
 			if anchor == spot:
 				break
 			var g := ghost_center_world(anchor, w, h)
+			var want := Vector3(spot.x - 3.5 + float(w - 1) * 0.5, 3.5 - spot.y - float(h - 1) * 0.5, 1.5)
 			pointer += cam.unproject_position(want) - cam.unproject_position(g)
 			drag.move_drag(pointer)
 			await process_frame
-		var final_anchor: Vector2i = drag.target_anchor()
+		var final_anchor: Vector2i = drag.node_anchor()
 		check(final_anchor == spot, "ghost steered onto fit spot round " + str(round_i) + " got " + str(final_anchor))
 		var cells: Array = game.ghost_cells(idx, final_anchor)
 		check(game.ghost_valid(cells), "ghost valid round " + str(round_i))
