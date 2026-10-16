@@ -11,7 +11,7 @@ var tray_x: Dictionary = {}
 var tray_tweens: Dictionary = {}
 var time := 0.0
 var view_w := 9.4
-var app_version := "2.4.9"
+var app_version := "2.5.0"
 var app_code := 0
 
 @onready var board: BoardView = $Board
@@ -53,6 +53,7 @@ func buzz_twice(a: int, gap: float, b: int) -> void:
 	buzz(b)
 
 func _ready() -> void:
+	Engine.max_fps = 120
 	load_version()
 	state = GameState.new()
 	sound.muted = state.muted

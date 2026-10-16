@@ -11,7 +11,6 @@ var drag_accum := Vector3.ZERO
 var last_pointer := Vector3.ZERO
 var last_valid := false
 var last_anchor := Vector2i(-999, -999)
-var last_shown := Vector2i(-99, -99)
 var has_pointer := false
 var lift_full := Vector3.ZERO
 var lift_blend := 0.0
@@ -30,8 +29,7 @@ func _process(delta: float) -> void:
 	if dragging < 0 or drag_node == null or not is_instance_valid(drag_node) or not has_pointer:
 		return
 	lift_blend = minf(lift_blend + delta * 7.0, 1.0)
-	var lift := lift_full * (lift_taper() * lift_blend)
-	drag_node.position = Vector3(spawn_center.x + drag_accum.x + lift.x, spawn_center.y + drag_accum.y + lift.y, DRAG_Z)
+	place_node()
 
 func current_gain() -> float:
 	return 1.0
@@ -128,25 +126,24 @@ func begin_drag(screen_pos: Vector2) -> void:
 	last_pointer = pt0
 	last_valid = false
 	last_anchor = Vector2i(-999, -999)
-	last_shown = Vector2i(-99, -99)
 	has_pointer = true
 	move_drag(screen_pos)
 
-func target_center() -> Vector3:
-	var lift := lift_full * lift_taper()
-	return Vector3(spawn_center.x + drag_accum.x + lift.x, spawn_center.y + drag_accum.y + lift.y, DRAG_Z)
+func place_node() -> void:
+	var lift := lift_full * (lift_taper() * lift_blend)
+	drag_node.position = Vector3(spawn_center.x + drag_accum.x + lift.x, spawn_center.y + drag_accum.y + lift.y, DRAG_Z)
+
+func node_anchor() -> Vector2i:
+	var piece: Dictionary = state.tray[dragging]
+	var shape: Dictionary = piece["shape"]
+	var w: int = shape["w"]
+	var h: int = shape["h"]
+	return snap_anchor(drag_node.position, w, h)
 
 func snap_anchor(center: Vector3, w: int, h: int) -> Vector2i:
 	var col := clampi(roundi(center.x + 3.5 - float(w - 1) * 0.5), 0, 8 - w)
 	var row := clampi(roundi(3.5 - center.y - float(h - 1) * 0.5), 0, 8 - h)
 	return Vector2i(col, row)
-
-func target_anchor() -> Vector2i:
-	var piece: Dictionary = state.tray[dragging]
-	var shape: Dictionary = piece["shape"]
-	var w: int = shape["w"]
-	var h: int = shape["h"]
-	return snap_anchor(target_center(), w, h)
 
 func move_drag(screen_pos: Vector2) -> void:
 	if dragging < 0 or drag_node == null:
@@ -158,11 +155,11 @@ func move_drag(screen_pos: Vector2) -> void:
 	var step := pt - last_pointer
 	last_pointer = pt
 	drag_accum += Vector3(step.x, step.y, 0.0) * current_gain()
-	var anchor := target_anchor()
+	place_node()
+	var anchor := node_anchor()
 	if anchor != last_anchor:
 		last_anchor = anchor
 		main.buzz(20)
-	last_shown = anchor
 	last_valid = bool(main.on_drag_preview(dragging, anchor))
 
 func end_drag(screen_pos: Vector2) -> void:
@@ -179,7 +176,7 @@ func end_drag(screen_pos: Vector2) -> void:
 			if pt.y < -4.3:
 				anchor = Vector2i(-99, -99)
 			else:
-				anchor = last_shown
+				anchor = node_anchor()
 	dragging = -1
 	drag_node = null
 	has_pointer = false
