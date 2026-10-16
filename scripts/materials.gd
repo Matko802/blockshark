@@ -66,7 +66,7 @@ static func unique_color(i: int) -> StandardMaterial3D:
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	m.roughness = 0.35
 	m.metallic = 0.05
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
 	return m
 
 static func empty() -> StandardMaterial3D:

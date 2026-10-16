@@ -5,7 +5,7 @@ const DL_PATH = "user://update.apk"
 
 var main
 var hud
-var current := "2.4.6"
+var current := "2.4.7"
 var http: HTTPRequest
 var dl: HTTPRequest
 var pending_silent := false
