@@ -73,7 +73,7 @@ static func icon_button(glyph_name: String, size: int) -> Button:
 	b.text = glyph(glyph_name)
 	b.add_theme_font_override("font", ICON_FONT)
 	b.add_theme_font_size_override("font_size", size)
-	b.custom_minimum_size = Vector2(56, 56)
+	b.custom_minimum_size = Vector2(64, 64)
 	var e := StyleBoxEmpty.new()
 	b.add_theme_stylebox_override("normal", e)
 	b.add_theme_stylebox_override("hover", e)
