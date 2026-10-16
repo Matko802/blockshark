@@ -76,7 +76,7 @@ jobs:
       - name: Stamp version
         run: |
           TAG="${GITHUB_REF_NAME}"
-          if [[ "$TAG" == v* ]]; then NAME="${TAG#v}"; else NAME="2.4.8-dev.${GITHUB_RUN_NUMBER}"; fi
+          if [[ "$TAG" == v* ]]; then NAME="${TAG#v}"; else NAME="2.4.9-dev.${GITHUB_RUN_NUMBER}"; fi
           printf '[app]\nversion_name="%s"\nversion_code=%s\n' "$NAME" "$GITHUB_RUN_NUMBER" > version.cfg
           sed -i "s/^version\/name=.*/version\/name=\"$NAME\"/" export_presets.cfg
           sed -i "s/^version\/code=.*/version\/code=$GITHUB_RUN_NUMBER/" export_presets.cfg

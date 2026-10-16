@@ -161,7 +161,7 @@ func move_drag(screen_pos: Vector2) -> void:
 	var anchor := target_anchor()
 	if anchor != last_anchor:
 		last_anchor = anchor
-		main.buzz(10)
+		main.buzz(20)
 	last_shown = anchor
 	last_valid = bool(main.on_drag_preview(dragging, anchor))
 
@@ -171,7 +171,15 @@ func end_drag(screen_pos: Vector2) -> void:
 	var idx := dragging
 	var anchor := Vector2i(-99, -99)
 	if has_pointer:
-		anchor = last_shown
+		var p = plane_point(screen_pos)
+		if p == null:
+			anchor = Vector2i(-99, -99)
+		else:
+			var pt: Vector3 = p
+			if pt.y < -4.3:
+				anchor = Vector2i(-99, -99)
+			else:
+				anchor = last_shown
 	dragging = -1
 	drag_node = null
 	has_pointer = false

@@ -11,7 +11,7 @@ var tray_x: Dictionary = {}
 var tray_tweens: Dictionary = {}
 var time := 0.0
 var view_w := 9.4
-var app_version := "2.4.8"
+var app_version := "2.4.9"
 var app_code := 0
 
 @onready var board: BoardView = $Board
@@ -42,7 +42,9 @@ func version_text() -> String:
 	return "v" + app_version
 
 func buzz(ms: int) -> void:
-	if OS.has_feature("android") or OS.has_feature("ios"):
+	if Engine.has_singleton("BlocksharkUpdate"):
+		Engine.get_singleton("BlocksharkUpdate").vibrate(ms)
+	elif OS.has_feature("android") or OS.has_feature("ios"):
 		Input.vibrate_handheld(ms)
 
 func buzz_twice(a: int, gap: float, b: int) -> void:
@@ -178,7 +180,7 @@ func on_pickup(idx: int) -> void:
 	tray_tweens.erase(idx)
 	node.scale = Vector3.ONE
 	sound.select()
-	buzz(15)
+	buzz(25)
 
 func ghost_cells(idx: int, anchor: Vector2i) -> Array:
 	var piece: Dictionary = state.tray[idx]
@@ -228,24 +230,24 @@ func on_drop(idx: int, anchor: Vector2i) -> void:
 		board.pop_cells(cleared)
 		sound.cleared(lines)
 		if lines > 1:
-			buzz_twice(50, 0.07, 70)
+			buzz_twice(60, 0.07, 90)
 		else:
-			buzz(40)
+			buzz(50)
 	else:
 		sound.place()
-		buzz(25)
+		buzz(35)
 	hud.show_gain(int(res["gained"]))
 	if state.remaining().size() == 3:
 		rebuild_tray()
 		sound.tray()
-		buzz(15)
+		buzz(25)
 	else:
 		layout_tray(true)
 		update_tray_dim()
 	hud.refresh(state.score, state.best, state.combo)
 	if state.game_over:
 		sound.over()
-		buzz(150)
+		buzz(200)
 		hud.show_over(state.score, state.best)
 
 func back_to_slot(idx: int) -> void:
@@ -267,7 +269,7 @@ func restart_game() -> void:
 	hud.hide_over()
 	hud.refresh(state.score, state.best, state.combo)
 	sound.tray()
-	buzz(20)
+	buzz(30)
 
 func set_sound_enabled(sound_on: bool) -> void:
 	state.muted = not sound_on
