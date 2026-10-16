@@ -10,6 +10,7 @@ var spawn_center := Vector3.ZERO
 var drag_accum := Vector3.ZERO
 var last_pointer := Vector3.ZERO
 var last_valid := false
+var last_anchor := Vector2i(-999, -999)
 var has_pointer := false
 var lift_full := Vector3.ZERO
 var lift_blend := 0.0
@@ -118,6 +119,7 @@ func begin_drag(screen_pos: Vector2) -> void:
 	drag_accum = Vector3.ZERO
 	last_pointer = pt0
 	last_valid = false
+	last_anchor = Vector2i(-999, -999)
 	has_pointer = true
 	move_drag(screen_pos)
 
@@ -147,7 +149,11 @@ func move_drag(screen_pos: Vector2) -> void:
 	var step := pt - last_pointer
 	last_pointer = pt
 	drag_accum += Vector3(step.x, step.y, 0.0) * current_gain()
-	last_valid = bool(main.on_drag_preview(dragging, target_anchor()))
+	var anchor := target_anchor()
+	if anchor != last_anchor:
+		last_anchor = anchor
+		main.buzz(10)
+	last_valid = bool(main.on_drag_preview(dragging, anchor))
 
 func end_drag(screen_pos: Vector2) -> void:
 	if dragging < 0:

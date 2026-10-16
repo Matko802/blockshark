@@ -238,6 +238,7 @@ func on_drop(idx: int, anchor: Vector2i) -> void:
 	if state.remaining().size() == 3:
 		rebuild_tray()
 		sound.tray()
+		buzz(15)
 	else:
 		layout_tray(true)
 		update_tray_dim()
