@@ -34,7 +34,7 @@ static func build(shape: Dictionary, color: int, unique: bool, pickable: bool) -
 		var area := Area3D.new()
 		var cs := CollisionShape3D.new()
 		var bs := BoxShape3D.new()
-		bs.size = Vector3(w + 0.4, h + 0.4, 2.0)
+		bs.size = Vector3(w + 0.2, h + 0.2, 2.0)
 		cs.shape = bs
 		area.add_child(cs)
 		root.add_child(area)

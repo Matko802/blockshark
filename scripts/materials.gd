@@ -86,6 +86,18 @@ static func board() -> StandardMaterial3D:
 		_board_mat.roughness = 0.9
 	return _board_mat
 
+static func tray_frame() -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.04, 0.04, 0.07)
+	m.roughness = 0.9
+	return m
+
+static func tray_edge() -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.45, 0.45, 0.50)
+	m.roughness = 0.8
+	return m
+
 static func base() -> StandardMaterial3D:
 	if _base_mat == null:
 		_base_mat = StandardMaterial3D.new()

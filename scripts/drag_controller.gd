@@ -17,7 +17,7 @@ var lift_full := Vector3.ZERO
 var lift_blend := 0.0
 
 const DRAG_Z = 1.5
-const LIFT_PX = 100.0
+const LIFT_PX = 200.0
 const TAPER_BAND = 1.5
 
 func setup(cam: Camera3D, bv: BoardView, st: GameState, mn) -> void:
