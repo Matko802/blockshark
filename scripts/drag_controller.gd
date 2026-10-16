@@ -134,11 +134,20 @@ func place_node() -> void:
 	drag_node.position = Vector3(spawn_center.x + drag_accum.x + lift.x, spawn_center.y + drag_accum.y + lift.y, DRAG_Z)
 
 func node_anchor() -> Vector2i:
-	var piece: Dictionary = state.tray[dragging]
-	var shape: Dictionary = piece["shape"]
-	var w: int = shape["w"]
-	var h: int = shape["h"]
-	return snap_anchor(drag_node.position, w, h)
+	return snap_anchor(drag_node.position, shape_w(), shape_h())
+
+func shape_w() -> int:
+	return int((state.tray[dragging] as Dictionary)["shape"]["w"])
+
+func shape_h() -> int:
+	return int((state.tray[dragging] as Dictionary)["shape"]["h"])
+
+func aim_center() -> Vector3:
+	var lift := lift_full * lift_taper()
+	return Vector3(spawn_center.x + drag_accum.x + lift.x, spawn_center.y + drag_accum.y + lift.y, DRAG_Z)
+
+func aim_over_board() -> bool:
+	return aim_center().y >= -4.25
 
 func snap_anchor(center: Vector3, w: int, h: int) -> Vector2i:
 	var col := clampi(roundi(center.x + 3.5 - float(w - 1) * 0.5), 0, 8 - w)
@@ -156,7 +165,11 @@ func move_drag(screen_pos: Vector2) -> void:
 	last_pointer = pt
 	drag_accum += Vector3(step.x, step.y, 0.0) * current_gain()
 	place_node()
-	var anchor := node_anchor()
+	if not aim_over_board():
+		board_view.hide_ghost()
+		last_valid = false
+		return
+	var anchor := snap_anchor(aim_center(), shape_w(), shape_h())
 	if anchor != last_anchor:
 		last_anchor = anchor
 		main.buzz(20)
@@ -167,16 +180,8 @@ func end_drag(screen_pos: Vector2) -> void:
 		return
 	var idx := dragging
 	var anchor := Vector2i(-99, -99)
-	if has_pointer:
-		var p = plane_point(screen_pos)
-		if p == null:
-			anchor = Vector2i(-99, -99)
-		else:
-			var pt: Vector3 = p
-			if pt.y < -4.3:
-				anchor = Vector2i(-99, -99)
-			else:
-				anchor = node_anchor()
+	if has_pointer and aim_over_board():
+		anchor = snap_anchor(aim_center(), shape_w(), shape_h())
 	dragging = -1
 	drag_node = null
 	has_pointer = false

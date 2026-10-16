@@ -76,21 +76,6 @@ func build() -> void:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
-	var tray_plate := Panel.new()
-	tray_plate.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	tray_plate.offset_left = 0
-	tray_plate.offset_right = 0
-	tray_plate.offset_top = -420
-	tray_plate.offset_bottom = 0
-	tray_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var tray_style := StyleBoxFlat.new()
-	tray_style.bg_color = Color(0.02, 0.02, 0.05, 0.72)
-	tray_style.border_color = Color(0.55, 0.55, 0.60)
-	tray_style.border_width_top = 2
-	tray_style.corner_radius_top_left = 24
-	tray_style.corner_radius_top_right = 24
-	tray_plate.add_theme_stylebox_override("panel", tray_style)
-	root.add_child(tray_plate)
 	top_box = VBoxContainer.new()
 	top_box.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	top_box.offset_top = 36

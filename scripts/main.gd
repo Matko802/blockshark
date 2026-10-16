@@ -61,7 +61,6 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(fit_camera)
 	apply_fixed_light()
 	drag.setup(camera, board, state, self)
-	build_tray_rack()
 	hud.setup(self, version_text())
 	updater.setup(self, hud, app_version)
 	rebuild_tray()
@@ -92,22 +91,6 @@ func fit_camera() -> void:
 
 func slot_pos(i: int) -> Vector3:
 	return Vector3(float(tray_x.get(i, TRAY_X[i])), TRAY_Y, TRAY_Z)
-
-func build_tray_rack() -> void:
-	var edge := MeshInstance3D.new()
-	edge.mesh = Mats.box()
-	edge.scale = Vector3(7.9, 0.10, 2.6)
-	edge.position = Vector3(0, TRAY_Y - 0.62, TRAY_Z)
-	edge.material_override = Mats.tray_edge()
-	edge.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	tray_root.add_child(edge)
-	var plate := MeshInstance3D.new()
-	plate.mesh = Mats.box()
-	plate.scale = Vector3(7.7, 0.12, 2.4)
-	plate.position = Vector3(0, TRAY_Y - 0.60, TRAY_Z)
-	plate.material_override = Mats.tray_frame()
-	plate.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	tray_root.add_child(plate)
 
 func remaining_indices() -> Array:
 	var out: Array = []
