@@ -32,7 +32,7 @@ func _process(delta: float) -> void:
 	drag_node.position = Vector3(spawn_center.x + drag_accum.x + lift.x, spawn_center.y + drag_accum.y + lift.y, DRAG_Z)
 
 func current_gain() -> float:
-	var base := clampf(camera.size / 10.0, 0.6, 1.6) * 1.5
+	var base := clampf(main.view_w / 9.0, 0.6, 1.6) * 1.5
 	if last_valid:
 		return base * 0.8
 	return base

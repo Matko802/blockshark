@@ -62,9 +62,11 @@ static func unique_color(i: int) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.albedo_color = COLORS[i % COLORS.size()]
 	m.albedo_texture = STONE
+	m.uv1_scale = Vector3(0.5, 0.5, 0.5)
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	m.roughness = 0.35
 	m.metallic = 0.05
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	return m
 
 static func empty() -> StandardMaterial3D:

@@ -10,7 +10,8 @@ var tray_nodes: Array = []
 var tray_x: Dictionary = {}
 var tray_tweens: Dictionary = {}
 var time := 0.0
-var app_version := "2.4.5"
+var view_w := 9.4
+var app_version := "2.4.6"
 var app_code := 0
 
 @onready var board: BoardView = $Board
@@ -53,8 +54,6 @@ func _ready() -> void:
 	load_version()
 	state = GameState.new()
 	sound.muted = state.muted
-	camera.position = Vector3(0, -1.0, 16.0)
-	camera.look_at(Vector3(0, -1.0, 0.0))
 	fit_camera()
 	get_viewport().size_changed.connect(fit_camera)
 	apply_fixed_light()
@@ -79,7 +78,13 @@ func _process(delta: float) -> void:
 func fit_camera() -> void:
 	var vs := get_viewport().get_visible_rect().size
 	var aspect := vs.x / maxf(vs.y, 1.0)
-	camera.size = maxf(10.0, 12.0 * aspect)
+	var half_w := 4.7
+	var half_h := 6.3
+	var t := tan(deg_to_rad(camera.fov) * 0.5)
+	var dist := maxf(half_w / maxf(t * aspect, 0.001), half_h / maxf(t, 0.001))
+	view_w = half_w * 2.0
+	camera.position = Vector3(0, -0.8, dist)
+	camera.look_at(Vector3(0, -0.8, 0.0))
 
 func slot_pos(i: int) -> Vector3:
 	return Vector3(float(tray_x.get(i, TRAY_X[i])), TRAY_Y, TRAY_Z)

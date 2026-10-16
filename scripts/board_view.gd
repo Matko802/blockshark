@@ -16,7 +16,7 @@ func key(r: int, c: int) -> String:
 
 func build() -> void:
 	var quad := MeshInstance3D.new()
-	quad.mesh = CubeMesh.mesh_for_size(CubeMesh.PZ, Vector3(SIZE, SIZE, 0), false)
+	quad.mesh = CubeMesh.mesh_for_size(CubeMesh.PZ, Vector3(SIZE, SIZE, 0), true)
 	quad.position = Vector3(0, 0, 0.10)
 	quad.material_override = Mats.board()
 	quad.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
