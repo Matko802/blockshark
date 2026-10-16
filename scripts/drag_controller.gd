@@ -48,17 +48,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				begin_drag(event.position)
 		else:
 			end_drag(event.position)
-	elif event is InputEventScreenTouch:
-		if event.pressed:
-			if dragging < 0:
-				begin_drag(event.position)
-		else:
-			end_drag(event.position)
-	elif dragging >= 0:
-		if event is InputEventMouseMotion:
-			move_drag(event.position)
-		elif event is InputEventScreenDrag:
-			move_drag(event.position)
+	elif event is InputEventMouseMotion and dragging >= 0:
+		move_drag(event.position)
 
 func ray_hit(screen_pos: Vector2) -> Dictionary:
 	var from := camera.project_ray_origin(screen_pos)
