@@ -10,7 +10,7 @@ var tray_nodes: Array = []
 var tray_x: Dictionary = {}
 var tray_tweens: Dictionary = {}
 var time := 0.0
-var app_version := "2.4.4"
+var app_version := "2.4.5"
 var app_code := 0
 
 @onready var board: BoardView = $Board
