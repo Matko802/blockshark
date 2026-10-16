@@ -52,6 +52,10 @@ func buzz_twice(a: int, gap: float, b: int) -> void:
 	await get_tree().create_timer(gap).timeout
 	buzz(b)
 
+func buzz_after(ms: int, delay: float) -> void:
+	await get_tree().create_timer(delay).timeout
+	buzz(ms)
+
 func _ready() -> void:
 	Engine.max_fps = 120
 	load_version()
@@ -231,12 +235,13 @@ func on_drop(idx: int, anchor: Vector2i) -> void:
 		board.pop_cells(cleared)
 		sound.cleared(lines)
 		if lines > 1:
-			buzz_twice(60, 0.07, 90)
+			buzz_after(60, 0.30)
+			buzz_after(70, 0.37)
 		else:
-			buzz(50)
+			buzz_after(50, 0.30)
 	else:
 		sound.place()
-		buzz(35)
+		buzz_after(35, 0.28)
 	hud.show_gain(int(res["gained"]))
 	if state.remaining().size() == 3:
 		rebuild_tray()

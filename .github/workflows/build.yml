@@ -38,6 +38,11 @@ jobs:
         run: |
           /tmp/Godot_v4.5-stable_linux.x86_64 --headless --path . --script res://tests/drag_exact_test.gd 2>&1 | tee drag.log
           grep -q "PASS dragexact" drag.log
+      - name: Run soak test
+        timeout-minutes: 10
+        run: |
+          /tmp/Godot_v4.5-stable_linux.x86_64 --headless --path . --script res://tests/soak_test.gd 2>&1 | tee soak.log
+          grep -q "PASS soak" soak.log
 
   apk:
     needs: test

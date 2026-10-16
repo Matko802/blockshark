@@ -29,12 +29,25 @@ func reset_board() -> void:
 			row.append(-1)
 		board.append(row)
 
-func new_batch() -> void:
+func roll_batch() -> void:
 	tray.clear()
 	for i in 3:
 		var shape: Dictionary = PieceDefs.random_shape(rng)
 		tray.append({"id": next_id, "shape": shape, "color": rng.randi_range(0, 7), "used": false})
 		next_id += 1
+
+func batch_has_fit() -> bool:
+	for p in tray:
+		if fits_anywhere(p["shape"]):
+			return true
+	return false
+
+func new_batch() -> void:
+	roll_batch()
+	for attempt in 25:
+		if batch_has_fit():
+			return
+		roll_batch()
 
 func can_place(shape: Dictionary, row: int, col: int) -> bool:
 	var cells: Array = shape["cells"]
